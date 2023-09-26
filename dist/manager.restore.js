@@ -29,16 +29,14 @@ function restoreManager(apps) {
         (0, lib_misc_1.printInfo)(`Backup file being used - ${global.backupFileName}`);
         (0, lib_db_1.restoreInit)();
         (0, lib_misc_1.printInfo)("Scanning the configurations...");
-        if (global.isSuperAdmin) {
-            yield restoreMapperFormulas();
-            yield restorePlugins();
-        }
         yield restoreLibrary();
         yield restoreFunctions();
         yield restoreConnectors();
         yield restoreDataServices();
         yield restoreDataFormats();
         yield restoreAgents();
+        yield restorePlugins();
+        yield restoreMapperFormulas();
         yield restoreDataPipes();
         yield restoreGroups();
         (0, lib_misc_1.header)("Restore complete!");
@@ -65,40 +63,34 @@ function superadminConfigExists(api, name) {
         }
     });
 }
-function superadminInsert(type, baseURL, backedUpData) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            logger.info(`SuperAdmin : Insert ${type} : ${backedUpData.name}`);
-            let data = JSON.parse(JSON.stringify(backedUpData));
-            delete data._id;
-            let newData = yield (0, manager_api_1.post)(baseURL, data);
-            (0, lib_misc_1.printInfo)(`${type} created : ${backedUpData.name}`);
-            logger.info(JSON.stringify(newData));
-            return newData;
-        }
-        catch (e) {
-            logger.error(e.message);
-        }
-    });
-}
-function superadminUpdate(type, baseURL, backedUpData, existinID) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            logger.info(`SuperAdmin : Update ${type} : ${backedUpData.name}`);
-            let data = JSON.parse(JSON.stringify(backedUpData));
-            data._id = existinID;
-            delete data.status;
-            let updateURL = `${baseURL}/${existinID}`;
-            let newData = yield (0, manager_api_1.put)(updateURL, data);
-            (0, lib_misc_1.printInfo)(`${type} updated : ${backedUpData.name}`);
-            logger.info(JSON.stringify(newData));
-            return newData;
-        }
-        catch (e) {
-            logger.error(e.message);
-        }
-    });
-}
+// async function superadminInsert(type: string, baseURL: string, backedUpData: any): Promise<any> {
+// 	try {
+// 		logger.info(`SuperAdmin : Insert ${type} : ${backedUpData.name}`);
+// 		let data = JSON.parse(JSON.stringify(backedUpData));
+// 		delete data._id;
+// 		let newData = await post(baseURL, data);
+// 		printInfo(`${type} created : ${backedUpData.name}`);
+// 		logger.info(JSON.stringify(newData));
+// 		return newData;
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
+// async function superadminUpdate(type: string, baseURL: string, backedUpData: any, existinID: string): Promise<any> {
+// 	try {
+// 		logger.info(`SuperAdmin : Update ${type} : ${backedUpData.name}`);
+// 		let data = JSON.parse(JSON.stringify(backedUpData));
+// 		data._id = existinID;
+// 		delete data.status;
+// 		let updateURL = `${baseURL}/${existinID}`;
+// 		let newData = await put(updateURL, data);
+// 		printInfo(`${type} updated : ${backedUpData.name}`);
+// 		logger.info(JSON.stringify(newData));
+// 		return newData;
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
 // APP Level APIs
 function configExists(api, name, selectedApp) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -149,63 +141,6 @@ function update(type, baseURL, selectedApp, backedUpData, existinID) {
             (0, lib_misc_1.printInfo)(`${type} updated : ${backedUpData.name}`);
             logger.info(JSON.stringify(newData));
             return newData;
-        }
-        catch (e) {
-            logger.error(e.message);
-        }
-    });
-}
-// SuperAdmin level restores
-function restoreMapperFormulas() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            let mapperFormulas = (0, lib_db_1.read)("mapperformulas");
-            if (mapperFormulas.length < 1)
-                return;
-            (0, lib_misc_1.header)("Mapper Formulas");
-            (0, lib_misc_1.printInfo)(`Mapper Formulas to restore - ${mapperFormulas.length}`);
-            let BASE_URL = "/api/a/rbac/admin/metadata/mapper/formula";
-            yield mapperFormulas.reduce((prev, mapperFormula) => __awaiter(this, void 0, void 0, function* () {
-                yield prev;
-                delete mapperFormula._metadata;
-                delete mapperFormula.__v;
-                delete mapperFormula.version;
-                let existingID = yield superadminConfigExists(BASE_URL, mapperFormula.name);
-                let newData = null;
-                if (existingID)
-                    newData = yield superadminUpdate("Mapper Formula", BASE_URL, mapperFormula, existingID);
-                else
-                    newData = yield superadminInsert("Mapper Formula", BASE_URL, mapperFormula);
-                (0, lib_db_1.restoreMapper)("mapperFormulas", mapperFormula._id, newData._id);
-            }), Promise.resolve());
-        }
-        catch (e) {
-            logger.error(e.message);
-        }
-    });
-}
-function restorePlugins() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            let plugins = (0, lib_db_1.read)("plugins");
-            if (plugins.length < 1)
-                return;
-            (0, lib_misc_1.header)("Plugins");
-            (0, lib_misc_1.printInfo)(`Plugins to restore - ${plugins.length}`);
-            let BASE_URL = "/api/a/bm/admin/node";
-            yield plugins.reduce((prev, plugin) => __awaiter(this, void 0, void 0, function* () {
-                yield prev;
-                delete plugin._metadata;
-                delete plugin.__v;
-                delete plugin.version;
-                let existingID = yield superadminConfigExists(BASE_URL, plugin.name);
-                let newData = null;
-                if (existingID)
-                    newData = yield superadminUpdate("Plugin", BASE_URL, plugin, existingID);
-                else
-                    newData = yield superadminInsert("Plugin", BASE_URL, plugin);
-                (0, lib_db_1.restoreMapper)("plugins", plugin._id, newData._id);
-            }), Promise.resolve());
         }
         catch (e) {
             logger.error(e.message);
@@ -395,6 +330,62 @@ function restoreAgents() {
                     newData = yield insert("Agent", BASE_URL, selectedApp, agent);
                 (0, lib_db_1.restoreMapper)("agents", agent._id, newData._id);
                 (0, lib_db_1.restoreMapper)("agentIDs", agentIDs[agent._id], newData.agentId);
+            }), Promise.resolve());
+        }
+        catch (e) {
+            logger.error(e.message);
+        }
+    });
+}
+function restorePlugins() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let plugins = (0, lib_db_1.read)("plugins");
+            if (plugins.length < 1)
+                return;
+            (0, lib_misc_1.header)("Plugins");
+            (0, lib_misc_1.printInfo)(`Plugins to restore - ${plugins.length}`);
+            let BASE_URL = `/api/a/bm/${selectedApp}/node`;
+            yield plugins.reduce((prev, plugin) => __awaiter(this, void 0, void 0, function* () {
+                yield prev;
+                delete plugin._metadata;
+                delete plugin.__v;
+                delete plugin.version;
+                let existingID = yield configExists(BASE_URL, plugin.name, selectedApp);
+                let newData = null;
+                if (existingID)
+                    newData = yield update("Plugin", BASE_URL, selectedApp, plugin, existingID);
+                else
+                    newData = yield insert("Plugin", BASE_URL, selectedApp, plugin);
+                (0, lib_db_1.restoreMapper)("plugins", plugin._id, newData._id);
+            }), Promise.resolve());
+        }
+        catch (e) {
+            logger.error(e.message);
+        }
+    });
+}
+function restoreMapperFormulas() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let mapperFormulas = (0, lib_db_1.read)("mapperformulas");
+            if (mapperFormulas.length < 1)
+                return;
+            (0, lib_misc_1.header)("Formulas");
+            (0, lib_misc_1.printInfo)(`Formulas to restore - ${mapperFormulas.length}`);
+            let BASE_URL = `/api/a/rbac/${selectedApp}/formula`;
+            yield mapperFormulas.reduce((prev, mapperFormula) => __awaiter(this, void 0, void 0, function* () {
+                yield prev;
+                delete mapperFormula._metadata;
+                delete mapperFormula.__v;
+                delete mapperFormula.version;
+                let existingID = yield configExists(BASE_URL, mapperFormula.name, selectedApp);
+                let newData = null;
+                if (existingID)
+                    newData = yield update("Formula", BASE_URL, selectedApp, mapperFormula, existingID);
+                else
+                    newData = yield insert("Formula", BASE_URL, selectedApp, mapperFormula);
+                (0, lib_db_1.restoreMapper)("mapperFormulas", mapperFormula._id, newData._id);
             }), Promise.resolve());
         }
         catch (e) {

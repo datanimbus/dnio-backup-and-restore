@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const log4js_1 = require("log4js");
-"log4js";
 const commander_1 = require("commander");
 const version = require("../package.json").version;
 global.version = version;

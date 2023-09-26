@@ -1,4 +1,4 @@
-import { getLogger as GetLogger, configure as Log4JSConfig } from "log4js"; "log4js";
+import { getLogger as GetLogger, configure as Log4JSConfig } from "log4js";
 import { Command } from "commander";
 
 const version = require("../package.json").version;

@@ -34,78 +34,18 @@ export async function backupManager(apps: any) {
 	printInfo(`Selected app: ${selectedApp}`);
 	printInfo("Scanning the configurations within the app...");
 
-	if (global.isSuperAdmin) {
-		await fetchMapperFormulas();
-		await fetchPlugins();
-		await fetchNPMLibraries();
-	} else {
-		printInfo("Skipping Mapper Formulas, Plugins and NPM Libraries as you are not a super admin.");
-	}
 	await fetchDataServices();
 	await fetchLibraries();
 	await fetchFunctions();
 	await fetchConnectors();
 	await fetchDataFormats();
 	await fetchAgents();
+	await fetchPlugins();
+	await fetchMapperFormulas();
 	await fetchDataPipes();
 	await fetchGroups();
 	await customiseBackup();
 	header("Backup complete!");
-}
-
-async function fetchMapperFormulas() {
-	try {
-		const URL_COUNT = "/api/a/rbac/admin/metadata/mapper/formula/count";
-		const URL_DATA = "/api/a/rbac/admin/metadata/mapper/formula";
-		const mapperFormulaCount = await get(URL_COUNT, new URLSearchParams());
-		const searchParams = new URLSearchParams();
-		searchParams.append("count", mapperFormulaCount);
-		searchParams.append("select", "-_metadata,-allowedFileTypes,-port,-__v,-users");
-		const mapperFormulas = await get(URL_DATA, searchParams);
-		save("mapperformulas", mapperFormulas);
-		mapperFormulas.forEach((mf: any) => {
-			backupMapper("mapperformulas", mf._id, mf.name);
-			backupMapper("mapperformulas_lookup", mf.name, mf._id);
-		});
-		printDone("Mapper Formulas *", mapperFormulaCount);
-	} catch (e: any) {
-		logger.error(e.message);
-	}
-}
-
-async function fetchPlugins() {
-	try {
-		const URL_COUNT = "/api/a/bm/admin/node/utils/count";
-		const URL_DATA = "/api/a/bm/admin/node";
-		const pluginCount = await get(URL_COUNT, new URLSearchParams());
-		const searchParams = new URLSearchParams();
-		searchParams.append("count", pluginCount);
-		searchParams.append("select", "-_metadata,-allowedFileTypes,-port,-__v,-users");
-		const plugins = await get(URL_DATA, searchParams);
-		save("plugins", plugins);
-		plugins.forEach((plugin: any) => {
-			backupMapper("plugins", plugin._id, plugin.name);
-			backupMapper("plugins_lookup", plugin.name, plugin._id);
-		});
-		printDone("Plugins *", pluginCount);
-	} catch (e: any) {
-		logger.error(e.message);
-	}
-}
-
-async function fetchNPMLibraries() {
-	try {
-		const URL_DATA = "/api/a/bm/admin/flow/utils/node-library";
-		const npmLibraries = await get(URL_DATA, new URLSearchParams());
-		save("npmlibraries", npmLibraries);
-		npmLibraries.forEach((lib: any) => {
-			backupMapper("npmlibraries", lib._id, lib.name);
-			backupMapper("npmlibraries_lookup", lib.name, lib._id);
-		});
-		printDone("NPM Library *", npmLibraries.length);
-	} catch (e: any) {
-		logger.error(e.message);
-	}
 }
 
 async function fetchDataServices() {
@@ -182,10 +122,9 @@ async function fetchConnectors() {
 async function fetchDataFormats() {
 	try {
 		const URL_DATA = `/api/a/bm/${selectedApp}/dataFormat`;
-		const URL_COUNT = `/api/a/bm/${selectedApp}/dataFormat`;
 		let searchParams = getURLParamsForCount();
 		searchParams.append("countOnly", "true");
-		const dataFormatsCount = await get(URL_COUNT, searchParams);
+		const dataFormatsCount = await get(URL_DATA, searchParams);
 		const dataFormats = await get(URL_DATA, getURLParamsForData(dataFormatsCount));
 		save("dataformats", dataFormats);
 		dataFormats.forEach((dataFormat: any) => {
@@ -211,6 +150,43 @@ async function fetchAgents() {
 			backupMapper("agentIDs", agent._id, agent.agentId);
 		});
 		printDone("Agents", agentsCount);
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
+async function fetchPlugins() {
+	try {
+		const URL_DATA = `/api/a/bm/${selectedApp}/plugin`;
+		let searchParams = getURLParamsForCount();
+		searchParams.append("countOnly", "true");
+		const pluginCount = await get(URL_DATA, searchParams);
+		const plugins = await get(URL_DATA, getURLParamsForData(pluginCount));
+		save("plugins", plugins);
+		plugins.forEach((plugin: any) => {
+			backupMapper("plugins", plugin._id, plugin.name);
+			backupMapper("plugins_lookup", plugin.name, plugin._id);
+		});
+		printDone("Plugins", pluginCount);
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
+async function fetchMapperFormulas() {
+	try {
+		const URL_DATA = `/api/a/rbac/${selectedApp}/formula`;
+		let searchParams = getURLParamsForCount();
+		searchParams.append("countOnly", "true");
+		let mapperFormulaCount = await get(URL_DATA, searchParams);
+		mapperFormulaCount = mapperFormulaCount.length
+		const mapperFormulas = await get(URL_DATA, getURLParamsForData(mapperFormulaCount));
+		save("mapperformulas", mapperFormulas);
+		mapperFormulas.forEach((mf: any) => {
+			backupMapper("mapperformulas", mf._id, mf.name);
+			backupMapper("mapperformulas_lookup", mf.name, mf._id);
+		});
+		printDone("Formulas", mapperFormulaCount);
 	} catch (e: any) {
 		logger.error(e.message);
 	}
@@ -261,18 +237,6 @@ async function customiseBackup() {
 	}
 	header("Customizing the backup");
 
-	let selectedMapperFormulas: string[] = [];
-	let selectedPlugins: string[] = [];
-	if (global.isSuperAdmin) {
-		let mapperformulasLookup = readBackupMap("mapperformulas_lookup");
-		(await selections("Mapper Formulas", Object.keys(mapperformulasLookup))).forEach((mf: string) => selectedMapperFormulas.push(mapperformulasLookup[mf]));
-
-		let pluginsLookup = readBackupMap("plugins_lookup");
-		(await selections("Plugins", Object.keys(pluginsLookup))).forEach((plugin: string) => selectedPlugins.push(pluginsLookup[plugin]));
-	} else {
-		printInfo("Skipping Mapper Formulas, Plugins and NPM Libraries as you are not a super admin.");
-	}
-
 	let dataservicesLookup = readBackupMap("dataservices_lookup");
 	let selectedDataservices: string[] = [];
 	(await selections("Data Services", Object.keys(dataservicesLookup))).forEach((ds: string) => selectedDataservices.push(dataservicesLookup[ds]));
@@ -297,6 +261,14 @@ async function customiseBackup() {
 	let selectedAgents: string[] = [];
 	(await selections("Agents", Object.keys(agentsLookup))).forEach((agent: string) => selectedAgents.push(agentsLookup[agent]));
 
+	let pluginsLookup = readBackupMap("plugins_lookup");
+	let selectedPlugins: string[] = [];
+	(await selections("Plugins", Object.keys(pluginsLookup))).forEach((plugin: string) => selectedPlugins.push(pluginsLookup[plugin]));
+
+	let mapperformulasLookup = readBackupMap("mapperformulas_lookup");
+	let selectedMapperFormulas: string[] = [];
+	(await selections("Formulas", Object.keys(mapperformulasLookup))).forEach((mf: string) => selectedMapperFormulas.push(mapperformulasLookup[mf]));
+
 	let datapipesLookup = readBackupMap("datapipes_lookup");
 	let selectedDataPipes: string[] = [];
 	(await selections("Data Pipes", Object.keys(datapipesLookup))).forEach((datapipe: string) => selectedDataPipes.push(datapipesLookup[datapipe]));
@@ -305,16 +277,14 @@ async function customiseBackup() {
 	let selectedGroups: string[] = [];
 	(await selections("groups", Object.keys(groupsLookup))).forEach((group: string) => selectedGroups.push(groupsLookup[group]));
 
-	if (global.isSuperAdmin) {
-		logger.info(`Mapper Formulas : ${selectedMapperFormulas.join(", ") || "Nil"}`);
-		logger.info(`Plugins : ${selectedPlugins.join(", ") || "Nil"}`);
-	}
 	logger.info(`Dataservices : ${selectedDataservices.join(", ") || "Nil"}`);
 	logger.info(`Libraries : ${selectedLibraries.join(", ") || "Nil"}`);
 	logger.info(`Functions : ${selectedFunctions.join(", ") || "Nil"}`);
 	logger.info(`Connectors : ${selectedConnectors.join(", ") || "Nil"}`);
 	logger.info(`Data Formats : ${selectedDataFormats.join(", ") || "Nil"}`);
 	logger.info(`Agents : ${selectedAgents.join(", ") || "Nil"}`);
+	logger.info(`Plugins : ${selectedPlugins.join(", ") || "Nil"}`);
+	logger.info(`Mapper Formulas : ${selectedMapperFormulas.join(", ") || "Nil"}`);
 	logger.info(`Data Pipes : ${selectedDataPipes.join(", ") || "Nil"}`);
 	logger.info(`Groups : ${selectedGroups.join(", ") || "Nil"}`);
 
@@ -357,16 +327,14 @@ async function customiseBackup() {
 		});
 	});
 
-	if (global.isSuperAdmin) {
-		logger.info(`Superset Mapper Formulas : ${selectedMapperFormulas.join(", ")}`);
-		logger.info(`Superset Plugins : ${selectedPlugins.join(", ")}`);
-	}
 	logger.info(`Superset Dataservices : ${superSetOfDataservices.join(", ")}`);
 	logger.info(`Superset Libraries : ${selectedLibraries.join(", ")}`);
 	logger.info(`Superset Functions : ${selectedFunctions.join(", ")}`);
 	logger.info(`Superset Conectors : ${selectedConnectors.join(", ")}`);
 	logger.info(`Superset Data Formats : ${selectedDataFormats.join(", ")}`);
 	logger.info(`Superset Agents : ${selectedAgents.join(", ")}`);
+	logger.info(`Superset Plugins : ${selectedPlugins.join(", ")}`);
+	logger.info(`Superset Mapper Formulas : ${selectedMapperFormulas.join(", ")}`);
 	logger.info(`Superset Data Pipes : ${selectedDataPipes.join(", ")}`);
 
 	let mapperformulas = read("mapperformulas").filter((mapperformula: any) => selectedMapperFormulas.indexOf(mapperformula._id) != -1);
@@ -380,16 +348,14 @@ async function customiseBackup() {
 	let datapipes = read("datapipes").filter((datapipe: any) => selectedDataPipes.indexOf(datapipe._id) != -1);
 	let groups = read("groups").filter((group: any) => selectedGroups.indexOf(group._id) != -1);
 
-	if (global.isSuperAdmin) {
-		save("mapperformulas", mapperformulas);
-		save("plugins", plugins);
-	}
 	save("dataservices", dataservices);
 	save("libraries", libraries);
 	save("functions", functions);
 	save("connectors", connectors);
 	save("dataformats", dataformats);
 	save("agents", agents);
+	save("plugins", plugins);
+	save("mapperformulas", mapperformulas);
 	save("datapipes", datapipes);
 	save("groups", groups);
 }

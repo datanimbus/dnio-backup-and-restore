@@ -21,10 +21,6 @@ export async function restoreManager(apps: any) {
 
 	printInfo("Scanning the configurations...");
 
-	if (global.isSuperAdmin) {
-		await restoreMapperFormulas();
-		await restorePlugins();
-	}
 
 	await restoreLibrary();
 	await restoreFunctions();
@@ -32,6 +28,8 @@ export async function restoreManager(apps: any) {
 	await restoreDataServices();
 	await restoreDataFormats();
 	await restoreAgents();
+	await restorePlugins();
+	await restoreMapperFormulas();
 	await restoreDataPipes();
 	await restoreGroups();
 	header("Restore complete!");
@@ -53,35 +51,35 @@ async function superadminConfigExists(api: string, name: string) {
 	}
 }
 
-async function superadminInsert(type: string, baseURL: string, backedUpData: any): Promise<any> {
-	try {
-		logger.info(`SuperAdmin : Insert ${type} : ${backedUpData.name}`);
-		let data = JSON.parse(JSON.stringify(backedUpData));
-		delete data._id;
-		let newData = await post(baseURL, data);
-		printInfo(`${type} created : ${backedUpData.name}`);
-		logger.info(JSON.stringify(newData));
-		return newData;
-	} catch (e: any) {
-		logger.error(e.message);
-	}
-}
+// async function superadminInsert(type: string, baseURL: string, backedUpData: any): Promise<any> {
+// 	try {
+// 		logger.info(`SuperAdmin : Insert ${type} : ${backedUpData.name}`);
+// 		let data = JSON.parse(JSON.stringify(backedUpData));
+// 		delete data._id;
+// 		let newData = await post(baseURL, data);
+// 		printInfo(`${type} created : ${backedUpData.name}`);
+// 		logger.info(JSON.stringify(newData));
+// 		return newData;
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
 
-async function superadminUpdate(type: string, baseURL: string, backedUpData: any, existinID: string): Promise<any> {
-	try {
-		logger.info(`SuperAdmin : Update ${type} : ${backedUpData.name}`);
-		let data = JSON.parse(JSON.stringify(backedUpData));
-		data._id = existinID;
-		delete data.status;
-		let updateURL = `${baseURL}/${existinID}`;
-		let newData = await put(updateURL, data);
-		printInfo(`${type} updated : ${backedUpData.name}`);
-		logger.info(JSON.stringify(newData));
-		return newData;
-	} catch (e: any) {
-		logger.error(e.message);
-	}
-}
+// async function superadminUpdate(type: string, baseURL: string, backedUpData: any, existinID: string): Promise<any> {
+// 	try {
+// 		logger.info(`SuperAdmin : Update ${type} : ${backedUpData.name}`);
+// 		let data = JSON.parse(JSON.stringify(backedUpData));
+// 		data._id = existinID;
+// 		delete data.status;
+// 		let updateURL = `${baseURL}/${existinID}`;
+// 		let newData = await put(updateURL, data);
+// 		printInfo(`${type} updated : ${backedUpData.name}`);
+// 		logger.info(JSON.stringify(newData));
+// 		return newData;
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
 
 // APP Level APIs
 async function configExists(api: string, name: string, selectedApp: string) {
@@ -131,54 +129,6 @@ async function update(type: string, baseURL: string, selectedApp: string, backed
 		logger.error(e.message);
 	}
 }
-
-// SuperAdmin level restores
-async function restoreMapperFormulas() {
-	try {
-		let mapperFormulas = read("mapperformulas");
-		if (mapperFormulas.length < 1) return;
-		header("Mapper Formulas");
-		printInfo(`Mapper Formulas to restore - ${mapperFormulas.length}`);
-		let BASE_URL = "/api/a/rbac/admin/metadata/mapper/formula";
-		await mapperFormulas.reduce(async (prev: any, mapperFormula: any) => {
-			await prev;
-			delete mapperFormula._metadata;
-			delete mapperFormula.__v;
-			delete mapperFormula.version;
-			let existingID = await superadminConfigExists(BASE_URL, mapperFormula.name);
-			let newData = null;
-			if (existingID) newData = await superadminUpdate("Mapper Formula", BASE_URL, mapperFormula, existingID);
-			else newData = await superadminInsert("Mapper Formula", BASE_URL, mapperFormula);
-			restoreMapper("mapperFormulas", mapperFormula._id, newData._id);
-		}, Promise.resolve());
-	} catch (e: any) {
-		logger.error(e.message);
-	}
-}
-
-async function restorePlugins() {
-	try {
-		let plugins = read("plugins");
-		if (plugins.length < 1) return;
-		header("Plugins");
-		printInfo(`Plugins to restore - ${plugins.length}`);
-		let BASE_URL = "/api/a/bm/admin/node";
-		await plugins.reduce(async (prev: any, plugin: any) => {
-			await prev;
-			delete plugin._metadata;
-			delete plugin.__v;
-			delete plugin.version;
-			let existingID = await superadminConfigExists(BASE_URL, plugin.name);
-			let newData = null;
-			if (existingID) newData = await superadminUpdate("Plugin", BASE_URL, plugin, existingID);
-			else newData = await superadminInsert("Plugin", BASE_URL, plugin);
-			restoreMapper("plugins", plugin._id, newData._id);
-		}, Promise.resolve());
-	} catch (e: any) {
-		logger.error(e.message);
-	}
-}
-
 
 // App level restores
 async function restoreLibrary() {
@@ -339,6 +289,52 @@ async function restoreAgents() {
 			else newData = await insert("Agent", BASE_URL, selectedApp, agent);
 			restoreMapper("agents", agent._id, newData._id);
 			restoreMapper("agentIDs", agentIDs[agent._id], newData.agentId);
+		}, Promise.resolve());
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
+async function restorePlugins() {
+	try {
+		let plugins = read("plugins");
+		if (plugins.length < 1) return;
+		header("Plugins");
+		printInfo(`Plugins to restore - ${plugins.length}`);
+		let BASE_URL = `/api/a/bm/${selectedApp}/node`;
+		await plugins.reduce(async (prev: any, plugin: any) => {
+			await prev;
+			delete plugin._metadata;
+			delete plugin.__v;
+			delete plugin.version;
+			let existingID = await configExists(BASE_URL, plugin.name, selectedApp);
+			let newData = null;
+			if (existingID) newData = await update("Plugin", BASE_URL, selectedApp, plugin, existingID);
+			else newData = await insert("Plugin", BASE_URL, selectedApp, plugin);
+			restoreMapper("plugins", plugin._id, newData._id);
+		}, Promise.resolve());
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
+async function restoreMapperFormulas() {
+	try {
+		let mapperFormulas = read("mapperformulas");
+		if (mapperFormulas.length < 1) return;
+		header("Formulas");
+		printInfo(`Formulas to restore - ${mapperFormulas.length}`);
+		let BASE_URL = `/api/a/rbac/${selectedApp}/formula`;
+		await mapperFormulas.reduce(async (prev: any, mapperFormula: any) => {
+			await prev;
+			delete mapperFormula._metadata;
+			delete mapperFormula.__v;
+			delete mapperFormula.version;
+			let existingID = await configExists(BASE_URL, mapperFormula.name, selectedApp);
+			let newData = null;
+			if (existingID) newData = await update("Formula", BASE_URL, selectedApp, mapperFormula, existingID);
+			else newData = await insert("Formula", BASE_URL, selectedApp, mapperFormula);
+			restoreMapper("mapperFormulas", mapperFormula._id, newData._id);
 		}, Promise.resolve());
 	} catch (e: any) {
 		logger.error(e.message);
