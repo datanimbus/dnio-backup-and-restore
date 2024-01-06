@@ -34,52 +34,6 @@ export async function restoreManager(apps: any) {
 	await restoreGroups();
 	header("Restore complete!");
 }
-// SuperAdmin level APIs
-async function superadminConfigExists(api: string, name: string) {
-	try {
-		let searchParams = new URLSearchParams();
-		searchParams.append("filter", JSON.stringify({ name: name }));
-		searchParams.append("count", "-1");
-		searchParams.append("select", "name");
-		logger.debug(`Check for existing config - ${api} ${searchParams}`);
-		let data = await get(api, searchParams);
-		logger.debug(`Check for existing config result - ${api} : ${JSON.stringify(data)}`);
-		if (data.length > 0 && data[0]._id) return data[0]._id;
-		return null;
-	} catch (e: any) {
-		logger.error(e.message);
-	}
-}
-
-// async function superadminInsert(type: string, baseURL: string, backedUpData: any): Promise<any> {
-// 	try {
-// 		logger.info(`SuperAdmin : Insert ${type} : ${backedUpData.name}`);
-// 		let data = JSON.parse(JSON.stringify(backedUpData));
-// 		delete data._id;
-// 		let newData = await post(baseURL, data);
-// 		printInfo(`${type} created : ${backedUpData.name}`);
-// 		logger.info(JSON.stringify(newData));
-// 		return newData;
-// 	} catch (e: any) {
-// 		logger.error(e.message);
-// 	}
-// }
-
-// async function superadminUpdate(type: string, baseURL: string, backedUpData: any, existinID: string): Promise<any> {
-// 	try {
-// 		logger.info(`SuperAdmin : Update ${type} : ${backedUpData.name}`);
-// 		let data = JSON.parse(JSON.stringify(backedUpData));
-// 		data._id = existinID;
-// 		delete data.status;
-// 		let updateURL = `${baseURL}/${existinID}`;
-// 		let newData = await put(updateURL, data);
-// 		printInfo(`${type} updated : ${backedUpData.name}`);
-// 		logger.info(JSON.stringify(newData));
-// 		return newData;
-// 	} catch (e: any) {
-// 		logger.error(e.message);
-// 	}
-// }
 
 // APP Level APIs
 async function configExists(api: string, name: string, selectedApp: string) {

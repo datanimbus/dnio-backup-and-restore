@@ -318,6 +318,10 @@ function customiseBackup() {
                 if (selectedFunctions.indexOf(fn) == -1)
                     selectedFunctions.push(fn);
             });
+            dependencyMatrixOfDataService[dataserviceID].connectors.forEach((fn) => {
+                if (selectedConnectors.indexOf(fn) == -1)
+                    selectedConnectors.push(fn);
+            });
         });
         let dependencyMatrixOfDataPipe = (0, lib_db_1.readDependencyMatrixOfDataPipes)();
         selectedDataPipes.forEach((dataPipeID) => {

@@ -14,18 +14,14 @@ function buildDependencyMatrixForDataPipe(datapipes) {
     datapipes.forEach((datapipe) => {
         const dp = JSON.stringify(datapipe);
         dependencyMatrix[datapipe._id] = {
-            plugins: [],
-            mapperformulas: [],
+            plugins: pluginIDs.filter((id) => dp.indexOf(id) !== -1),
+            mapperformulas: mapperformulaIDs.filter((id) => dp.indexOf(id) !== -1),
             dataservices: dataServiceIDs.filter((id) => dp.indexOf(id) !== -1),
             dataformats: dataformatIDs.filter((id) => dp.indexOf(id) !== -1),
             functions: functionIDs.filter((id) => dp.indexOf(id) !== -1),
             agents: agentIDs.filter((id) => dp.indexOf(id) !== -1),
             connectors: connectorIDs.filter((id) => dp.indexOf(id) !== -1)
         };
-        if (global.isSuperAdmin) {
-            dependencyMatrix[datapipe._id]["plugins"] = pluginIDs.filter((id) => dp.indexOf(id) !== -1);
-            dependencyMatrix[datapipe._id]["mapperformulas"] = mapperformulaIDs.filter((id) => dp.indexOf(id) !== -1);
-        }
     });
     return dependencyMatrix;
 }
@@ -36,6 +32,7 @@ function parseAndFixDataPipes(datapipes) {
     const functions = (0, lib_db_1.readRestoreMap)("functions");
     const dataservices = (0, lib_db_1.readRestoreMap)("dataservices");
     const dataformats = (0, lib_db_1.readRestoreMap)("dataformats");
+    const connectors = (0, lib_db_1.readRestoreMap)("connectors");
     const agents = (0, lib_db_1.readRestoreMap)("agents");
     const agentIDsFromBackup = (0, lib_db_1.readBackupMap)("agentIDs");
     const agentIDsFromRestore = (0, lib_db_1.readRestoreMap)("agentIDs");
@@ -54,7 +51,7 @@ function parseAndFixDataPipes(datapipes) {
             let backupAgentId = agentIDsFromBackup[agentId];
             dp = dp.split(backupAgentId).join(agentIDsFromRestore[backupAgentId]);
         });
-        dependencyMatrix.connectors.forEach((connectorId) => dp = dp.split(connectorId).join(functions[connectorId]));
+        dependencyMatrix.connectors.forEach((connectorId) => dp = dp.split(connectorId).join(connectors[connectorId]));
         fixedDataPipes.push(JSON.parse(dp));
     });
     return fixedDataPipes;

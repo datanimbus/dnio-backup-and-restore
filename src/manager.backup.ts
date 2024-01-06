@@ -179,7 +179,7 @@ async function fetchMapperFormulas() {
 		let searchParams = getURLParamsForCount();
 		searchParams.append("countOnly", "true");
 		let mapperFormulaCount = await get(URL_DATA, searchParams);
-		mapperFormulaCount = mapperFormulaCount.length
+		mapperFormulaCount = mapperFormulaCount.length;
 		const mapperFormulas = await get(URL_DATA, getURLParamsForData(mapperFormulaCount));
 		save("mapperformulas", mapperFormulas);
 		mapperFormulas.forEach((mf: any) => {
@@ -299,6 +299,9 @@ async function customiseBackup() {
 		});
 		dependencyMatrixOfDataService[dataserviceID].functions.forEach((fn: string) => {
 			if (selectedFunctions.indexOf(fn) == -1) selectedFunctions.push(fn);
+		});
+		dependencyMatrixOfDataService[dataserviceID].connectors.forEach((fn: string) => {
+			if (selectedConnectors.indexOf(fn) == -1) selectedConnectors.push(fn);
 		});
 	});
 

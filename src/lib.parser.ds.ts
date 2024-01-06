@@ -202,6 +202,7 @@ export function buildDependencyMatrixForDataServices(dataservices: any[]) {
 		dependencyMatrix[dataservice._id].libraries = libraries;
 		// get list of functions
 		dependencyMatrix[dataservice._id].functions = findFunctions(dataservice);
+		dependencyMatrix[dataservice._id].connectors = [dataservice.connectors.data._id, dataservice.connectors.file._id];
 	});
 	return dependencyMatrix;
 }
