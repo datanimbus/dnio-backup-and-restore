@@ -98,7 +98,7 @@ exports.get = get;
 function post(endpoint, payload) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`POST ${global.host}${endpoint}`);
-        logger.info(`Payload - ${JSON.stringify(payload)}`);
+        logger.debug(`Payload - ${JSON.stringify(payload)}`);
         try {
             return yield got_1.default.post(`${global.host}${endpoint}`, {
                 "headers": {
@@ -121,7 +121,7 @@ exports.post = post;
 function put(endpoint, payload) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`PUT ${global.host}${endpoint}`);
-        logger.info(`Payload - ${JSON.stringify(payload)}`);
+        logger.debug(`Payload - ${JSON.stringify(payload)}`);
         try {
             return yield got_1.default.put(`${global.host}${endpoint}`, {
                 "headers": {

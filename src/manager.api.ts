@@ -71,7 +71,7 @@ export async function get(endpoint: string, searchParams: URLSearchParams): Prom
 
 export async function post(endpoint: string, payload: any): Promise<any> {
 	logger.info(`POST ${global.host}${endpoint}`);
-	logger.info(`Payload - ${JSON.stringify(payload)}`);
+	logger.debug(`Payload - ${JSON.stringify(payload)}`);
 	try {
 		return await got.post(`${global.host}${endpoint}`, {
 			"headers": {
@@ -91,7 +91,7 @@ export async function post(endpoint: string, payload: any): Promise<any> {
 
 export async function put(endpoint: string, payload: any): Promise<any> {
 	logger.info(`PUT ${global.host}${endpoint}`);
-	logger.info(`Payload - ${JSON.stringify(payload)}`);
+	logger.debug(`Payload - ${JSON.stringify(payload)}`);
 	try {
 		return await got.put(`${global.host}${endpoint}`, {
 			"headers": {

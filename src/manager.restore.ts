@@ -3,7 +3,7 @@ import { header, printInfo } from "./lib.misc";
 import { get, post, put } from "./manager.api";
 import { read, readBackupMap, readRestoreMap, restoreInit, restoreMapper } from "./lib.db";
 import { generateSampleDataSerivce, parseAndFixDataServices } from "./lib.parser.ds";
-import { parseAndFixDataPipes } from "./lib.parser.pipe";
+import { generateSampleDataPipe, parseAndFixDataPipes, parseDataPipeAndFixAppName } from "./lib.parser.pipe";
 
 let logger = global.logger;
 let selectedApp = "";
@@ -302,18 +302,38 @@ async function restoreDataPipes() {
 		header("Data pipe");
 		printInfo(`Data pipes to restore - ${datapipes.length}`);
 		const BASE_URL = `/api/a/bm/${selectedApp}/flow`;
+		// Find which data pipes exists and which doesn't
+		let newDataPipes: string[] = [];
+		await datapipes.reduce(async (prev: any, dp: any) => {
+			await prev;
+			let existingID = await configExists(BASE_URL, dp.name, selectedApp);
+			if (existingID) return restoreMapper("datapipes", dp._id, existingID);
+			newDataPipes.push(dp._id);
+		}, Promise.resolve());
+
+		// Create new data pipes
+		logger.info(`New data pipes - ${newDataPipes.join(", ")}`);
+		printInfo(`New data pipes to be created - ${newDataPipes.length}`);
+		await datapipes.reduce(async (prev: any, dp: any) => {
+			await prev;
+			if (newDataPipes.indexOf(dp._id) == -1) return;
+			let newDP = generateSampleDataPipe(dp.name, selectedApp);
+			let newData = await insert("Data pipe", BASE_URL, selectedApp, newDP);
+			return restoreMapper("datapipes", dp._id, newData._id);
+		}, Promise.resolve());
+
 		datapipes = parseAndFixDataPipes(datapipes);
+		let datapipeMap = readRestoreMap("datapipes");
 		await datapipes.reduce(async (prev: any, datapipe: any) => {
 			await prev;
 			delete datapipe._metadata;
 			delete datapipe.__v;
 			delete datapipe.version;
 			delete datapipe.lastInvoked;
-			let existingID = await configExists(BASE_URL, datapipe.name, selectedApp);
-			let newData = null;
-			if (existingID) newData = await update("Data pipe", BASE_URL, selectedApp, datapipe, existingID);
-			else newData = await insert("Data pipe", BASE_URL, selectedApp, datapipe);
-			restoreMapper("datapipes", datapipe._id, newData._id);
+			datapipe.status = "Stopped";
+			datapipe = parseDataPipeAndFixAppName(datapipe, selectedApp);
+			if (newDataPipes.indexOf(datapipe._id) != -1) datapipe.status = "Draft";
+			return await update("Data pipe", BASE_URL, selectedApp, datapipe, datapipeMap[datapipe._id]);
 		}, Promise.resolve());
 	} catch (e: any) {
 		logger.error(e.message);

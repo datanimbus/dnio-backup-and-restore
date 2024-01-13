@@ -16,6 +16,7 @@ const manager_api_1 = require("./manager.api");
 const lib_db_1 = require("./lib.db");
 const lib_parser_ds_1 = require("./lib.parser.ds");
 const lib_parser_pipe_1 = require("./lib.parser.pipe");
+const lib_dependencyMatrix_1 = require("./lib.dependencyMatrix");
 let logger = global.logger;
 let selectedApp = "";
 function getURLParamsForCount() {
@@ -46,11 +47,12 @@ function backupManager(apps) {
         yield fetchFunctions();
         yield fetchConnectors();
         yield fetchDataFormats();
+        yield fetchDataPipes();
         yield fetchAgents();
         yield fetchPlugins();
         yield fetchMapperFormulas();
-        yield fetchDataPipes();
         yield fetchGroups();
+        (0, lib_dependencyMatrix_1.recalculateDependencyMatrix)();
         yield customiseBackup();
         (0, lib_misc_1.header)("Backup complete!");
     });
@@ -201,15 +203,16 @@ function fetchMapperFormulas() {
             const URL_DATA = `/api/a/rbac/${selectedApp}/formula`;
             let searchParams = getURLParamsForCount();
             searchParams.append("countOnly", "true");
-            let mapperFormulaCount = yield (0, manager_api_1.get)(URL_DATA, searchParams);
-            mapperFormulaCount = mapperFormulaCount.length;
-            const mapperFormulas = yield (0, manager_api_1.get)(URL_DATA, getURLParamsForData(mapperFormulaCount));
+            // TODO: DS-867
+            // let mapperFormulaCount = await get(URL_DATA, searchParams);
+            // mapperFormulaCount = mapperFormulaCount.length;
+            const mapperFormulas = yield (0, manager_api_1.get)(URL_DATA, getURLParamsForData(1000));
             (0, lib_db_1.save)("mapperformulas", mapperFormulas);
             mapperFormulas.forEach((mf) => {
                 (0, lib_db_1.backupMapper)("mapperformulas", mf._id, mf.name);
                 (0, lib_db_1.backupMapper)("mapperformulas_lookup", mf.name, mf._id);
             });
-            (0, lib_misc_1.printDone)("Formulas", mapperFormulaCount);
+            (0, lib_misc_1.printDone)("Formulas", mapperFormulas.length);
         }
         catch (e) {
             logger.error(e.message);
@@ -266,34 +269,34 @@ function customiseBackup() {
         (0, lib_misc_1.header)("Customizing the backup");
         let dataservicesLookup = (0, lib_db_1.readBackupMap)("dataservices_lookup");
         let selectedDataservices = [];
-        (yield (0, lib_cli_1.selections)("Data Services", Object.keys(dataservicesLookup))).forEach((ds) => selectedDataservices.push(dataservicesLookup[ds]));
-        let librariesLookup = (0, lib_db_1.readBackupMap)("libraries_lookup");
-        let selectedLibraries = [];
-        (yield (0, lib_cli_1.selections)("Libraries", Object.keys(librariesLookup))).forEach((lib) => selectedLibraries.push(librariesLookup[lib]));
-        let functionsLookup = (0, lib_db_1.readBackupMap)("functions_lookup");
-        let selectedFunctions = [];
-        (yield (0, lib_cli_1.selections)("Functions", Object.keys(functionsLookup))).forEach((fn) => selectedFunctions.push(functionsLookup[fn]));
-        let connectorsLookup = (0, lib_db_1.readBackupMap)("connectors_lookup");
-        let selectedConnectors = [];
-        (yield (0, lib_cli_1.selections)("Connectors", Object.keys(connectorsLookup))).forEach((connector) => selectedConnectors.push(connectorsLookup[connector]));
-        let dataformatsLookup = (0, lib_db_1.readBackupMap)("dataformats_lookup");
-        let selectedDataFormats = [];
-        (yield (0, lib_cli_1.selections)("Data Formats", Object.keys(dataformatsLookup))).forEach((dataformat) => selectedDataFormats.push(dataformatsLookup[dataformat]));
-        let agentsLookup = (0, lib_db_1.readBackupMap)("agents_lookup");
-        let selectedAgents = [];
-        (yield (0, lib_cli_1.selections)("Agents", Object.keys(agentsLookup))).forEach((agent) => selectedAgents.push(agentsLookup[agent]));
-        let pluginsLookup = (0, lib_db_1.readBackupMap)("plugins_lookup");
-        let selectedPlugins = [];
-        (yield (0, lib_cli_1.selections)("Plugins", Object.keys(pluginsLookup))).forEach((plugin) => selectedPlugins.push(pluginsLookup[plugin]));
-        let mapperformulasLookup = (0, lib_db_1.readBackupMap)("mapperformulas_lookup");
-        let selectedMapperFormulas = [];
-        (yield (0, lib_cli_1.selections)("Formulas", Object.keys(mapperformulasLookup))).forEach((mf) => selectedMapperFormulas.push(mapperformulasLookup[mf]));
+        (yield (0, lib_cli_1.selections)("Data Services", Object.keys(dataservicesLookup).sort())).forEach((ds) => selectedDataservices.push(dataservicesLookup[ds]));
         let datapipesLookup = (0, lib_db_1.readBackupMap)("datapipes_lookup");
         let selectedDataPipes = [];
-        (yield (0, lib_cli_1.selections)("Data Pipes", Object.keys(datapipesLookup))).forEach((datapipe) => selectedDataPipes.push(datapipesLookup[datapipe]));
+        (yield (0, lib_cli_1.selections)("Data Pipes", Object.keys(datapipesLookup).sort())).forEach((datapipe) => selectedDataPipes.push(datapipesLookup[datapipe]));
+        let librariesLookup = (0, lib_db_1.readBackupMap)("libraries_lookup");
+        let selectedLibraries = [];
+        (yield (0, lib_cli_1.selections)("Libraries", Object.keys(librariesLookup).sort())).forEach((lib) => selectedLibraries.push(librariesLookup[lib]));
+        let functionsLookup = (0, lib_db_1.readBackupMap)("functions_lookup");
+        let selectedFunctions = [];
+        (yield (0, lib_cli_1.selections)("Functions", Object.keys(functionsLookup).sort())).forEach((fn) => selectedFunctions.push(functionsLookup[fn]));
+        let connectorsLookup = (0, lib_db_1.readBackupMap)("connectors_lookup");
+        let selectedConnectors = [];
+        (yield (0, lib_cli_1.selections)("Connectors", Object.keys(connectorsLookup).sort())).forEach((connector) => selectedConnectors.push(connectorsLookup[connector]));
+        let dataformatsLookup = (0, lib_db_1.readBackupMap)("dataformats_lookup");
+        let selectedDataFormats = [];
+        (yield (0, lib_cli_1.selections)("Data Formats", Object.keys(dataformatsLookup).sort())).forEach((dataformat) => selectedDataFormats.push(dataformatsLookup[dataformat]));
+        let agentsLookup = (0, lib_db_1.readBackupMap)("agents_lookup");
+        let selectedAgents = [];
+        (yield (0, lib_cli_1.selections)("Agents", Object.keys(agentsLookup).sort())).forEach((agent) => selectedAgents.push(agentsLookup[agent]));
+        let pluginsLookup = (0, lib_db_1.readBackupMap)("plugins_lookup");
+        let selectedPlugins = [];
+        (yield (0, lib_cli_1.selections)("Plugins", Object.keys(pluginsLookup).sort())).forEach((plugin) => selectedPlugins.push(pluginsLookup[plugin]));
+        let mapperformulasLookup = (0, lib_db_1.readBackupMap)("mapperformulas_lookup");
+        let selectedMapperFormulas = [];
+        (yield (0, lib_cli_1.selections)("Formulas", Object.keys(mapperformulasLookup).sort())).forEach((mf) => selectedMapperFormulas.push(mapperformulasLookup[mf]));
         let groupsLookup = (0, lib_db_1.readBackupMap)("groups_lookup");
         let selectedGroups = [];
-        (yield (0, lib_cli_1.selections)("groups", Object.keys(groupsLookup))).forEach((group) => selectedGroups.push(groupsLookup[group]));
+        (yield (0, lib_cli_1.selections)("groups", Object.keys(groupsLookup).sort())).forEach((group) => selectedGroups.push(groupsLookup[group]));
         logger.info(`Dataservices : ${selectedDataservices.join(", ") || "Nil"}`);
         logger.info(`Libraries : ${selectedLibraries.join(", ") || "Nil"}`);
         logger.info(`Functions : ${selectedFunctions.join(", ") || "Nil"}`);
@@ -304,25 +307,7 @@ function customiseBackup() {
         logger.info(`Mapper Formulas : ${selectedMapperFormulas.join(", ") || "Nil"}`);
         logger.info(`Data Pipes : ${selectedDataPipes.join(", ") || "Nil"}`);
         logger.info(`Groups : ${selectedGroups.join(", ") || "Nil"}`);
-        let dependencyMatrixOfDataService = (0, lib_db_1.readDependencyMatrixOfDataServices)();
         let superSetOfDataservices = selectedDataservices;
-        selectedDataservices.forEach((dataserviceID) => {
-            selectAllRelated(dataserviceID, dependencyMatrixOfDataService)
-                .filter(ds => superSetOfDataservices.indexOf(ds) == -1)
-                .forEach(ds => superSetOfDataservices.push(ds));
-            dependencyMatrixOfDataService[dataserviceID].libraries.forEach((library) => {
-                if (selectedLibraries.indexOf(library) == -1)
-                    selectedLibraries.push(library);
-            });
-            dependencyMatrixOfDataService[dataserviceID].functions.forEach((fn) => {
-                if (selectedFunctions.indexOf(fn) == -1)
-                    selectedFunctions.push(fn);
-            });
-            dependencyMatrixOfDataService[dataserviceID].connectors.forEach((fn) => {
-                if (selectedConnectors.indexOf(fn) == -1)
-                    selectedConnectors.push(fn);
-            });
-        });
         let dependencyMatrixOfDataPipe = (0, lib_db_1.readDependencyMatrixOfDataPipes)();
         selectedDataPipes.forEach((dataPipeID) => {
             dependencyMatrixOfDataPipe[dataPipeID].dataservices.forEach((dataservice) => {
@@ -352,6 +337,28 @@ function customiseBackup() {
             dependencyMatrixOfDataPipe[dataPipeID].mapperformulas.forEach((mf) => {
                 if (selectedMapperFormulas.indexOf(mf) == -1)
                     selectedMapperFormulas.push(mf);
+            });
+            dependencyMatrixOfDataPipe[dataPipeID].datapipes.forEach((dp) => {
+                if (selectedDataPipes.indexOf(dp) == -1)
+                    selectedDataPipes.push(dp);
+            });
+        });
+        let dependencyMatrixOfDataService = (0, lib_db_1.readDependencyMatrixOfDataServices)();
+        selectedDataservices.forEach((dataserviceID) => {
+            selectAllRelated(dataserviceID, dependencyMatrixOfDataService)
+                .filter(ds => superSetOfDataservices.indexOf(ds) == -1)
+                .forEach(ds => superSetOfDataservices.push(ds));
+            dependencyMatrixOfDataService[dataserviceID].libraries.forEach((library) => {
+                if (selectedLibraries.indexOf(library) == -1)
+                    selectedLibraries.push(library);
+            });
+            dependencyMatrixOfDataService[dataserviceID].functions.forEach((fn) => {
+                if (selectedFunctions.indexOf(fn) == -1)
+                    selectedFunctions.push(fn);
+            });
+            dependencyMatrixOfDataService[dataserviceID].connectors.forEach((fn) => {
+                if (selectedConnectors.indexOf(fn) == -1)
+                    selectedConnectors.push(fn);
             });
         });
         logger.info(`Superset Dataservices : ${superSetOfDataservices.join(", ")}`);

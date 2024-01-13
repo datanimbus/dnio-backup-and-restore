@@ -4,6 +4,7 @@ import { get } from "./manager.api";
 import { backupDependencyMatrixOfDataService, backupInit, backupMapper, readBackupMap, readDependencyMatrixOfDataServices, save, read, backupDependencyMatrixOfDataPipe, readDependencyMatrixOfDataPipes } from "./lib.db";
 import { buildDependencyMatrixForDataServices } from "./lib.parser.ds";
 import { buildDependencyMatrixForDataPipe } from "./lib.parser.pipe";
+import { recalculateDependencyMatrix } from "./lib.dependencyMatrix";
 
 let logger = global.logger;
 
@@ -39,11 +40,12 @@ export async function backupManager(apps: any) {
 	await fetchFunctions();
 	await fetchConnectors();
 	await fetchDataFormats();
+	await fetchDataPipes();
 	await fetchAgents();
 	await fetchPlugins();
 	await fetchMapperFormulas();
-	await fetchDataPipes();
 	await fetchGroups();
+	recalculateDependencyMatrix();
 	await customiseBackup();
 	header("Backup complete!");
 }
@@ -178,15 +180,16 @@ async function fetchMapperFormulas() {
 		const URL_DATA = `/api/a/rbac/${selectedApp}/formula`;
 		let searchParams = getURLParamsForCount();
 		searchParams.append("countOnly", "true");
-		let mapperFormulaCount = await get(URL_DATA, searchParams);
-		mapperFormulaCount = mapperFormulaCount.length;
-		const mapperFormulas = await get(URL_DATA, getURLParamsForData(mapperFormulaCount));
+		// TODO: DS-867
+		// let mapperFormulaCount = await get(URL_DATA, searchParams);
+		// mapperFormulaCount = mapperFormulaCount.length;
+		const mapperFormulas = await get(URL_DATA, getURLParamsForData(1000));
 		save("mapperformulas", mapperFormulas);
 		mapperFormulas.forEach((mf: any) => {
 			backupMapper("mapperformulas", mf._id, mf.name);
 			backupMapper("mapperformulas_lookup", mf.name, mf._id);
 		});
-		printDone("Formulas", mapperFormulaCount);
+		printDone("Formulas", mapperFormulas.length);
 	} catch (e: any) {
 		logger.error(e.message);
 	}
@@ -239,43 +242,43 @@ async function customiseBackup() {
 
 	let dataservicesLookup = readBackupMap("dataservices_lookup");
 	let selectedDataservices: string[] = [];
-	(await selections("Data Services", Object.keys(dataservicesLookup))).forEach((ds: string) => selectedDataservices.push(dataservicesLookup[ds]));
-
-	let librariesLookup = readBackupMap("libraries_lookup");
-	let selectedLibraries: string[] = [];
-	(await selections("Libraries", Object.keys(librariesLookup))).forEach((lib: string) => selectedLibraries.push(librariesLookup[lib]));
-
-	let functionsLookup = readBackupMap("functions_lookup");
-	let selectedFunctions: string[] = [];
-	(await selections("Functions", Object.keys(functionsLookup))).forEach((fn: string) => selectedFunctions.push(functionsLookup[fn]));
-
-	let connectorsLookup = readBackupMap("connectors_lookup");
-	let selectedConnectors: string[] = [];
-	(await selections("Connectors", Object.keys(connectorsLookup))).forEach((connector: string) => selectedConnectors.push(connectorsLookup[connector]));
-
-	let dataformatsLookup = readBackupMap("dataformats_lookup");
-	let selectedDataFormats: string[] = [];
-	(await selections("Data Formats", Object.keys(dataformatsLookup))).forEach((dataformat: string) => selectedDataFormats.push(dataformatsLookup[dataformat]));
-
-	let agentsLookup = readBackupMap("agents_lookup");
-	let selectedAgents: string[] = [];
-	(await selections("Agents", Object.keys(agentsLookup))).forEach((agent: string) => selectedAgents.push(agentsLookup[agent]));
-
-	let pluginsLookup = readBackupMap("plugins_lookup");
-	let selectedPlugins: string[] = [];
-	(await selections("Plugins", Object.keys(pluginsLookup))).forEach((plugin: string) => selectedPlugins.push(pluginsLookup[plugin]));
-
-	let mapperformulasLookup = readBackupMap("mapperformulas_lookup");
-	let selectedMapperFormulas: string[] = [];
-	(await selections("Formulas", Object.keys(mapperformulasLookup))).forEach((mf: string) => selectedMapperFormulas.push(mapperformulasLookup[mf]));
+	(await selections("Data Services", Object.keys(dataservicesLookup).sort())).forEach((ds: string) => selectedDataservices.push(dataservicesLookup[ds]));
 
 	let datapipesLookup = readBackupMap("datapipes_lookup");
 	let selectedDataPipes: string[] = [];
-	(await selections("Data Pipes", Object.keys(datapipesLookup))).forEach((datapipe: string) => selectedDataPipes.push(datapipesLookup[datapipe]));
+	(await selections("Data Pipes", Object.keys(datapipesLookup).sort())).forEach((datapipe: string) => selectedDataPipes.push(datapipesLookup[datapipe]));
+
+	let librariesLookup = readBackupMap("libraries_lookup");
+	let selectedLibraries: string[] = [];
+	(await selections("Libraries", Object.keys(librariesLookup).sort())).forEach((lib: string) => selectedLibraries.push(librariesLookup[lib]));
+
+	let functionsLookup = readBackupMap("functions_lookup");
+	let selectedFunctions: string[] = [];
+	(await selections("Functions", Object.keys(functionsLookup).sort())).forEach((fn: string) => selectedFunctions.push(functionsLookup[fn]));
+
+	let connectorsLookup = readBackupMap("connectors_lookup");
+	let selectedConnectors: string[] = [];
+	(await selections("Connectors", Object.keys(connectorsLookup).sort())).forEach((connector: string) => selectedConnectors.push(connectorsLookup[connector]));
+
+	let dataformatsLookup = readBackupMap("dataformats_lookup");
+	let selectedDataFormats: string[] = [];
+	(await selections("Data Formats", Object.keys(dataformatsLookup).sort())).forEach((dataformat: string) => selectedDataFormats.push(dataformatsLookup[dataformat]));
+
+	let agentsLookup = readBackupMap("agents_lookup");
+	let selectedAgents: string[] = [];
+	(await selections("Agents", Object.keys(agentsLookup).sort())).forEach((agent: string) => selectedAgents.push(agentsLookup[agent]));
+
+	let pluginsLookup = readBackupMap("plugins_lookup");
+	let selectedPlugins: string[] = [];
+	(await selections("Plugins", Object.keys(pluginsLookup).sort())).forEach((plugin: string) => selectedPlugins.push(pluginsLookup[plugin]));
+
+	let mapperformulasLookup = readBackupMap("mapperformulas_lookup");
+	let selectedMapperFormulas: string[] = [];
+	(await selections("Formulas", Object.keys(mapperformulasLookup).sort())).forEach((mf: string) => selectedMapperFormulas.push(mapperformulasLookup[mf]));
 
 	let groupsLookup = readBackupMap("groups_lookup");
 	let selectedGroups: string[] = [];
-	(await selections("groups", Object.keys(groupsLookup))).forEach((group: string) => selectedGroups.push(groupsLookup[group]));
+	(await selections("groups", Object.keys(groupsLookup).sort())).forEach((group: string) => selectedGroups.push(groupsLookup[group]));
 
 	logger.info(`Dataservices : ${selectedDataservices.join(", ") || "Nil"}`);
 	logger.info(`Libraries : ${selectedLibraries.join(", ") || "Nil"}`);
@@ -288,22 +291,7 @@ async function customiseBackup() {
 	logger.info(`Data Pipes : ${selectedDataPipes.join(", ") || "Nil"}`);
 	logger.info(`Groups : ${selectedGroups.join(", ") || "Nil"}`);
 
-	let dependencyMatrixOfDataService = readDependencyMatrixOfDataServices();
 	let superSetOfDataservices = selectedDataservices;
-	selectedDataservices.forEach((dataserviceID: string) => {
-		selectAllRelated(dataserviceID, dependencyMatrixOfDataService)
-			.filter(ds => superSetOfDataservices.indexOf(ds) == -1)
-			.forEach(ds => superSetOfDataservices.push(ds));
-		dependencyMatrixOfDataService[dataserviceID].libraries.forEach((library: string) => {
-			if (selectedLibraries.indexOf(library) == -1) selectedLibraries.push(library);
-		});
-		dependencyMatrixOfDataService[dataserviceID].functions.forEach((fn: string) => {
-			if (selectedFunctions.indexOf(fn) == -1) selectedFunctions.push(fn);
-		});
-		dependencyMatrixOfDataService[dataserviceID].connectors.forEach((fn: string) => {
-			if (selectedConnectors.indexOf(fn) == -1) selectedConnectors.push(fn);
-		});
-	});
 
 	let dependencyMatrixOfDataPipe = readDependencyMatrixOfDataPipes();
 	selectedDataPipes.forEach((dataPipeID: string) => {
@@ -327,6 +315,25 @@ async function customiseBackup() {
 		});
 		dependencyMatrixOfDataPipe[dataPipeID].mapperformulas.forEach((mf: string) => {
 			if (selectedMapperFormulas.indexOf(mf) == -1) selectedMapperFormulas.push(mf);
+		});
+		dependencyMatrixOfDataPipe[dataPipeID].datapipes.forEach((dp: string) => {
+			if (selectedDataPipes.indexOf(dp) == -1) selectedDataPipes.push(dp);
+		});
+	});
+
+	let dependencyMatrixOfDataService = readDependencyMatrixOfDataServices();
+	selectedDataservices.forEach((dataserviceID: string) => {
+		selectAllRelated(dataserviceID, dependencyMatrixOfDataService)
+			.filter(ds => superSetOfDataservices.indexOf(ds) == -1)
+			.forEach(ds => superSetOfDataservices.push(ds));
+		dependencyMatrixOfDataService[dataserviceID].libraries.forEach((library: string) => {
+			if (selectedLibraries.indexOf(library) == -1) selectedLibraries.push(library);
+		});
+		dependencyMatrixOfDataService[dataserviceID].functions.forEach((fn: string) => {
+			if (selectedFunctions.indexOf(fn) == -1) selectedFunctions.push(fn);
+		});
+		dependencyMatrixOfDataService[dataserviceID].connectors.forEach((fn: string) => {
+			if (selectedConnectors.indexOf(fn) == -1) selectedConnectors.push(fn);
 		});
 	});
 

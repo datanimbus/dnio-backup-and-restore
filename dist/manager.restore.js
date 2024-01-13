@@ -354,20 +354,39 @@ function restoreDataPipes() {
             (0, lib_misc_1.header)("Data pipe");
             (0, lib_misc_1.printInfo)(`Data pipes to restore - ${datapipes.length}`);
             const BASE_URL = `/api/a/bm/${selectedApp}/flow`;
+            // Find which data pipes exists and which doesn't
+            let newDataPipes = [];
+            yield datapipes.reduce((prev, dp) => __awaiter(this, void 0, void 0, function* () {
+                yield prev;
+                let existingID = yield configExists(BASE_URL, dp.name, selectedApp);
+                if (existingID)
+                    return (0, lib_db_1.restoreMapper)("datapipes", dp._id, existingID);
+                newDataPipes.push(dp._id);
+            }), Promise.resolve());
+            // Create new data pipes
+            logger.info(`New data pipes - ${newDataPipes.join(", ")}`);
+            (0, lib_misc_1.printInfo)(`New data pipes to be created - ${newDataPipes.length}`);
+            yield datapipes.reduce((prev, dp) => __awaiter(this, void 0, void 0, function* () {
+                yield prev;
+                if (newDataPipes.indexOf(dp._id) == -1)
+                    return;
+                let newDP = (0, lib_parser_pipe_1.generateSampleDataPipe)(dp.name, selectedApp);
+                let newData = yield insert("Data pipe", BASE_URL, selectedApp, newDP);
+                return (0, lib_db_1.restoreMapper)("datapipes", dp._id, newData._id);
+            }), Promise.resolve());
             datapipes = (0, lib_parser_pipe_1.parseAndFixDataPipes)(datapipes);
+            let datapipeMap = (0, lib_db_1.readRestoreMap)("datapipes");
             yield datapipes.reduce((prev, datapipe) => __awaiter(this, void 0, void 0, function* () {
                 yield prev;
                 delete datapipe._metadata;
                 delete datapipe.__v;
                 delete datapipe.version;
                 delete datapipe.lastInvoked;
-                let existingID = yield configExists(BASE_URL, datapipe.name, selectedApp);
-                let newData = null;
-                if (existingID)
-                    newData = yield update("Data pipe", BASE_URL, selectedApp, datapipe, existingID);
-                else
-                    newData = yield insert("Data pipe", BASE_URL, selectedApp, datapipe);
-                (0, lib_db_1.restoreMapper)("datapipes", datapipe._id, newData._id);
+                datapipe.status = "Stopped";
+                datapipe = (0, lib_parser_pipe_1.parseDataPipeAndFixAppName)(datapipe, selectedApp);
+                if (newDataPipes.indexOf(datapipe._id) != -1)
+                    datapipe.status = "Draft";
+                return yield update("Data pipe", BASE_URL, selectedApp, datapipe, datapipeMap[datapipe._id]);
             }), Promise.resolve());
         }
         catch (e) {

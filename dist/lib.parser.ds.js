@@ -181,12 +181,6 @@ function buildDependencyMatrixForDataServices(dataservices) {
     let dependencyMatrix = {};
     dataservices.forEach((dataservice) => {
         dependencyMatrix[dataservice._id] = { dataservices: [], libraries: [], functions: [] };
-        if (dataservice.relatedSchemas) {
-            dataservice.relatedSchemas.outgoing.forEach((outgoing) => {
-                if (dependencyMatrix[dataservice._id].dataservices.indexOf(outgoing.service) == -1)
-                    dependencyMatrix[dataservice._id].dataservices.push(outgoing.service);
-            });
-        }
         // get list of libraries
         let libraries = dataservice.definition ? findLibraries(dataservice.definition) : [];
         libraries = getUniqueElements(libraries);
@@ -194,6 +188,13 @@ function buildDependencyMatrixForDataServices(dataservices) {
         // get list of functions
         dependencyMatrix[dataservice._id].functions = findFunctions(dataservice);
         dependencyMatrix[dataservice._id].connectors = [dataservice.connectors.data._id, dataservice.connectors.file._id];
+        // relationships
+        if (dataservice.relatedSchemas) {
+            dataservice.relatedSchemas.outgoing.forEach((outgoing) => {
+                if (dependencyMatrix[dataservice._id].dataservices.indexOf(outgoing.service) == -1)
+                    dependencyMatrix[dataservice._id].dataservices.push(outgoing.service);
+            });
+        }
     });
     return dependencyMatrix;
 }
