@@ -167,15 +167,31 @@ function restoreConnectors() {
             (0, lib_misc_1.header)("Connectors");
             (0, lib_misc_1.printInfo)(`Connectors to restore - ${connectors.length}`);
             let BASE_URL = `/api/a/rbac/${selectedApp}/connector`;
+            let searchParams = new URLSearchParams();
+            searchParams.append("filter", JSON.stringify({ app: selectedApp }));
+            searchParams.append("select", "name, options");
+            searchParams.append("sort", "_id");
+            let defaultConnectors = yield (0, manager_api_1.get)(BASE_URL, searchParams);
+            console.log(`Default connectors - ${JSON.stringify(defaultConnectors)}`);
+            let defaultConnectorsMap = {};
+            defaultConnectors.filter((connector) => connector.options.default)
+                .forEach((connector) => defaultConnectorsMap[connector.name] = connector._id);
+            console.log(`Default connectors - ${JSON.stringify(defaultConnectorsMap)}`);
             yield connectors.reduce((prev, connector) => __awaiter(this, void 0, void 0, function* () {
                 yield prev;
+                if (defaultConnectorsMap[connector.name]) {
+                    (0, lib_db_1.restoreMapper)("connectors", connector._id, defaultConnectorsMap[connector.name]._id);
+                    console.log(`Connector ${connector.name} already exists`);
+                    return;
+                }
                 delete connector._metadata;
                 delete connector.__v;
                 delete connector.version;
                 let existingID = yield configExists(BASE_URL, connector.name, selectedApp);
                 let newData = null;
-                if (existingID)
+                if (existingID) {
                     newData = yield update("Connector", BASE_URL, selectedApp, connector, existingID);
+                }
                 else
                     newData = yield insert("Connector", BASE_URL, selectedApp, connector);
                 (0, lib_db_1.restoreMapper)("connectors", connector._id, newData._id);

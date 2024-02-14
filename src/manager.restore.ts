@@ -141,14 +141,32 @@ async function restoreConnectors() {
 		header("Connectors");
 		printInfo(`Connectors to restore - ${connectors.length}`);
 		let BASE_URL = `/api/a/rbac/${selectedApp}/connector`;
+		let searchParams = new URLSearchParams();
+		searchParams.append("filter", JSON.stringify({ app: selectedApp }));
+		searchParams.append("select", "name, options");
+		searchParams.append("sort", "_id");
+		let defaultConnectors = await get(BASE_URL, searchParams);
+		logger.debug(`Default connectors - ${JSON.stringify(defaultConnectors)}`);
+		let defaultConnectorsMap: any = {};
+		defaultConnectors.filter((connector: any) => connector.options.default)
+			.forEach((connector: any) => defaultConnectorsMap[connector.name] = connector._id);
+		logger.debug(`Default connectors map - ${JSON.stringify(defaultConnectorsMap)}`);
+
 		await connectors.reduce(async (prev: any, connector: any) => {
 			await prev;
+			if (defaultConnectorsMap[connector.name]) {
+				restoreMapper("connectors", connector._id, defaultConnectorsMap[connector.name]._id);
+				logger.debug(`Connector ${connector.name} already exists`);
+				return;
+			}
 			delete connector._metadata;
 			delete connector.__v;
 			delete connector.version;
 			let existingID = await configExists(BASE_URL, connector.name, selectedApp);
 			let newData = null;
-			if (existingID) newData = await update("Connector", BASE_URL, selectedApp, connector, existingID);
+			if (existingID) {
+				newData = await update("Connector", BASE_URL, selectedApp, connector, existingID);
+			}
 			else newData = await insert("Connector", BASE_URL, selectedApp, connector);
 			restoreMapper("connectors", connector._id, newData._id);
 		}, Promise.resolve());
