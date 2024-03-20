@@ -37,7 +37,7 @@ export async function backupManager(apps: any) {
 
 	await fetchDataServices();
 	await fetchLibraries();
-	await fetchFunctions();
+	// await fetchFunctions();
 	await fetchConnectors();
 	await fetchDataFormats();
 	await fetchDataPipes();

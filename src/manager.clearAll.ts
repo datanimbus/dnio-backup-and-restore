@@ -36,7 +36,7 @@ export async function clearAllManager(apps: any) {
 	await clearDataFormats();
 	await clearDataServices();
 	await clearConnectors();
-	await clearFunctions();
+	// await clearFunctions();
 	await clearLibrary();
 	header("Cleanup complete!");
 }

@@ -23,7 +23,7 @@ export async function restoreManager(apps: any) {
 
 
 	await restoreLibrary();
-	await restoreFunctions();
+	// await restoreFunctions();
 	await restoreConnectors();
 	await restoreDataServices();
 	await restoreDataFormats();

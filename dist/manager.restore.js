@@ -172,16 +172,16 @@ function restoreConnectors() {
             searchParams.append("select", "name, options");
             searchParams.append("sort", "_id");
             let defaultConnectors = yield (0, manager_api_1.get)(BASE_URL, searchParams);
-            console.log(`Default connectors - ${JSON.stringify(defaultConnectors)}`);
+            logger.debug(`Default connectors - ${JSON.stringify(defaultConnectors)}`);
             let defaultConnectorsMap = {};
             defaultConnectors.filter((connector) => connector.options.default)
                 .forEach((connector) => defaultConnectorsMap[connector.name] = connector._id);
-            console.log(`Default connectors - ${JSON.stringify(defaultConnectorsMap)}`);
+            logger.debug(`Default connectors map - ${JSON.stringify(defaultConnectorsMap)}`);
             yield connectors.reduce((prev, connector) => __awaiter(this, void 0, void 0, function* () {
                 yield prev;
                 if (defaultConnectorsMap[connector.name]) {
                     (0, lib_db_1.restoreMapper)("connectors", connector._id, defaultConnectorsMap[connector.name]._id);
-                    console.log(`Connector ${connector.name} already exists`);
+                    logger.debug(`Connector ${connector.name} already exists`);
                     return;
                 }
                 delete connector._metadata;
