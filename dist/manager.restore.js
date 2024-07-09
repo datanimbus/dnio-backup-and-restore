@@ -30,12 +30,13 @@ function restoreManager(apps) {
         (0, lib_db_1.restoreInit)();
         (0, lib_misc_1.printInfo)("Scanning the configurations...");
         yield restoreLibrary();
-        yield restoreFunctions();
+        // await restoreFunctions();
         yield restoreConnectors();
         yield restoreDataServices();
         yield restoreDataFormats();
         yield restoreAgents();
         yield restorePlugins();
+        yield restoreMyNodes();
         yield restoreMapperFormulas();
         yield restoreDataPipes();
         yield restoreGroups();
@@ -66,12 +67,16 @@ function configExists(api, name, selectedApp) {
 function insert(type, baseURL, selectedApp, backedUpData) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            logger.info(`${selectedApp} : Insert ${type} : ${backedUpData.name}`);
+            let name = backedUpData.name;
+            if (!name) {
+                name = backedUpData.label;
+            }
+            logger.info(`${selectedApp} : Insert ${type} : ${name}`);
             let data = JSON.parse(JSON.stringify(backedUpData));
             data.app = selectedApp;
             delete data._id;
             let newData = yield (0, manager_api_1.post)(baseURL, data);
-            (0, lib_misc_1.printInfo)(`${type} created : ${backedUpData.name}`);
+            (0, lib_misc_1.printInfo)(`${type} created : ${name}`);
             logger.info(JSON.stringify(newData));
             return newData;
         }
@@ -83,14 +88,18 @@ function insert(type, baseURL, selectedApp, backedUpData) {
 function update(type, baseURL, selectedApp, backedUpData, existinID) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            logger.info(`${selectedApp} : Update ${type} : ${backedUpData.name}`);
+            let name = backedUpData.name;
+            if (!name) {
+                name = backedUpData.label;
+            }
+            logger.info(`${selectedApp} : Update ${type} : ${name}`);
             let data = JSON.parse(JSON.stringify(backedUpData));
             data.app = selectedApp;
             data._id = existinID;
             delete data.status;
             let updateURL = `${baseURL}/${existinID}`;
             let newData = yield (0, manager_api_1.put)(updateURL, data);
-            (0, lib_misc_1.printInfo)(`${type} updated : ${backedUpData.name}`);
+            (0, lib_misc_1.printInfo)(`${type} updated : ${name}`);
             logger.info(JSON.stringify(newData));
             return newData;
         }
@@ -126,38 +135,33 @@ function restoreLibrary() {
         }
     });
 }
-function restoreFunctions() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            let functions = (0, lib_db_1.read)("functions");
-            if (functions.length < 1)
-                return;
-            (0, lib_misc_1.header)("Functions");
-            (0, lib_misc_1.printInfo)(`Functions to restore - ${functions.length}`);
-            let BASE_URL = `/api/a/bm/${selectedApp}/faas`;
-            yield functions.reduce((prev, fn) => __awaiter(this, void 0, void 0, function* () {
-                yield prev;
-                delete fn._metadata;
-                delete fn.__v;
-                delete fn.version;
-                delete fn.lastInvoked;
-                let existingID = yield configExists(BASE_URL, fn.name, selectedApp);
-                let newData = null;
-                if (existingID)
-                    newData = yield update("Function", BASE_URL, selectedApp, fn, existingID);
-                else {
-                    newData = yield insert("Function", BASE_URL, selectedApp, fn);
-                    newData = yield update("Function", BASE_URL, selectedApp, fn, newData._id);
-                }
-                (0, lib_db_1.restoreMapper)("functions", fn._id, newData._id);
-                (0, lib_db_1.restoreMapper)("functionURL", newData._id, newData.url);
-            }), Promise.resolve());
-        }
-        catch (e) {
-            logger.error(e.message);
-        }
-    });
-}
+// async function restoreFunctions() {
+// 	try {
+// 		let functions = read("functions");
+// 		if (functions.length < 1) return;
+// 		header("Functions");
+// 		printInfo(`Functions to restore - ${functions.length}`);
+// 		let BASE_URL = `/api/a/bm/${selectedApp}/faas`;
+// 		await functions.reduce(async (prev: any, fn: any) => {
+// 			await prev;
+// 			delete fn._metadata;
+// 			delete fn.__v;
+// 			delete fn.version;
+// 			delete fn.lastInvoked;
+// 			let existingID = await configExists(BASE_URL, fn.name, selectedApp);
+// 			let newData = null;
+// 			if (existingID) newData = await update("Function", BASE_URL, selectedApp, fn, existingID);
+// 			else {
+// 				newData = await insert("Function", BASE_URL, selectedApp, fn);
+// 				newData = await update("Function", BASE_URL, selectedApp, fn, newData._id);
+// 			}
+// 			restoreMapper("functions", fn._id, newData._id);
+// 			restoreMapper("functionURL", newData._id, newData.url);
+// 		}, Promise.resolve());
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
 function restoreConnectors() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -313,7 +317,7 @@ function restorePlugins() {
                 return;
             (0, lib_misc_1.header)("Plugins");
             (0, lib_misc_1.printInfo)(`Plugins to restore - ${plugins.length}`);
-            let BASE_URL = `/api/a/bm/${selectedApp}/node`;
+            let BASE_URL = `/api/a/bm/${selectedApp}/plugin`;
             yield plugins.reduce((prev, plugin) => __awaiter(this, void 0, void 0, function* () {
                 yield prev;
                 delete plugin._metadata;
@@ -326,6 +330,34 @@ function restorePlugins() {
                 else
                     newData = yield insert("Plugin", BASE_URL, selectedApp, plugin);
                 (0, lib_db_1.restoreMapper)("plugins", plugin._id, newData._id);
+            }), Promise.resolve());
+        }
+        catch (e) {
+            logger.error(e.message);
+        }
+    });
+}
+function restoreMyNodes() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let myNodes = (0, lib_db_1.read)("myNodes");
+            if (myNodes.length < 1)
+                return;
+            (0, lib_misc_1.header)("My Nodes");
+            (0, lib_misc_1.printInfo)(`My Nodes to restore - ${myNodes.length}`);
+            let BASE_URL = `/api/a/bm/${selectedApp}/my-node`;
+            yield myNodes.reduce((prev, myNode) => __awaiter(this, void 0, void 0, function* () {
+                yield prev;
+                delete myNode._metadata;
+                delete myNode.__v;
+                delete myNode.version;
+                let existingID = yield configExists(BASE_URL, myNode.label, selectedApp);
+                let newData = null;
+                if (existingID)
+                    newData = yield update("MyNode", BASE_URL, selectedApp, myNode, existingID);
+                else
+                    newData = yield insert("MyNode", BASE_URL, selectedApp, myNode);
+                (0, lib_db_1.restoreMapper)("myNodes", myNode._id, newData._id);
             }), Promise.resolve());
         }
         catch (e) {

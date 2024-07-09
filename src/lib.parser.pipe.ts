@@ -18,6 +18,7 @@ export function generateSampleDataPipe(name: string, selectedApp: String) {
 export function buildDependencyMatrixForDataPipe(datapipes: any[]) {
 	const mapperformulaIDs = Object.keys(readBackupMap("mapperformulas"));
 	const pluginIDs = Object.keys(readBackupMap("plugins"));
+	const myNodesIDs = Object.keys(readBackupMap("myNodes"));
 	const dataServiceIDs = Object.keys(readBackupMap("dataservices"));
 	const dataformatIDs = Object.keys(readBackupMap("dataformats"));
 	const functionIDs = Object.keys(readBackupMap("functions"));
@@ -28,6 +29,7 @@ export function buildDependencyMatrixForDataPipe(datapipes: any[]) {
 	datapipes.forEach((datapipe: any) => {
 		const dp = JSON.stringify(datapipe);
 		dependencyMatrix[datapipe._id] = {
+			myNodes: myNodesIDs.filter((id: any) => dp.indexOf(id) !== -1),
 			plugins: pluginIDs.filter((id: any) => dp.indexOf(id) !== -1),
 			mapperformulas: mapperformulaIDs.filter((id: any) => dp.indexOf(id) !== -1),
 			dataservices: dataServiceIDs.filter((id: any) => dp.indexOf(id) !== -1),
@@ -63,6 +65,7 @@ export function parseDataPipeAndFixAppName(input: any, appName: string) {
 
 export function parseAndFixDataPipes(datapipes: any[]): any[] {
 	const plugins = readRestoreMap("plugins");
+	const myNodes = readRestoreMap("myNodes");
 	const mapperformulas = readRestoreMap("mapperFormulas");
 	const functions = readRestoreMap("functions");
 	const dataservices = readRestoreMap("dataservices");
@@ -77,6 +80,7 @@ export function parseAndFixDataPipes(datapipes: any[]): any[] {
 	datapipes.forEach((datapipe: any) => {
 		let dp = JSON.stringify(datapipe);
 		const dependencyMatrix = dependencyMatrixOfDataPipe[datapipe._id];
+		dependencyMatrix.myNodes.forEach((myNodeId: any) => dp = dp.split(myNodeId).join(myNodes[myNodeId]));
 		dependencyMatrix.plugins.forEach((pluginId: any) => dp = dp.split(pluginId).join(plugins[pluginId]));
 		dependencyMatrix.mapperformulas.forEach((mapperformulaId: any) => dp = dp.split(mapperformulaId).join(mapperformulas[mapperformulaId]));
 		dependencyMatrix.dataservices.forEach((dataservicesId: any) => dp = dp.split(dataservicesId).join(dataservices[dataservicesId]));

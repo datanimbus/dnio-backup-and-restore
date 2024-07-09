@@ -13,6 +13,8 @@ let sampleBackupData = {
         "mapperformulas_lookup": {},
         "plugins": {},
         "plugins_lookup": {},
+        "myNodes": {},
+        "myNodes_lookup": {},
         "npmlibraries": {},
         "npmlibraries_lookup": {},
         "dataservices": {},
@@ -36,6 +38,7 @@ let sampleBackupData = {
     "data": {
         "mapperformulas": [],
         "plugins": [],
+        "myNodes": [],
         "npmlibraries": [],
         "dataservices": [],
         "libraries": [],

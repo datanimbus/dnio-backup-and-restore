@@ -35,16 +35,17 @@ export async function backupManager(apps: any) {
 	printInfo(`Selected app: ${selectedApp}`);
 	printInfo("Scanning the configurations within the app...");
 
-	await fetchDataServices();
 	await fetchLibraries();
 	// await fetchFunctions();
 	await fetchConnectors();
 	await fetchDataFormats();
-	await fetchDataPipes();
 	await fetchAgents();
 	await fetchPlugins();
+	await fetchMyNodes();
 	await fetchMapperFormulas();
 	await fetchGroups();
+	await fetchDataServices();
+	await fetchDataPipes();
 	recalculateDependencyMatrix();
 	await customiseBackup();
 	header("Backup complete!");
@@ -86,23 +87,23 @@ async function fetchLibraries() {
 	}
 }
 
-async function fetchFunctions() {
-	try {
-		let URL_COUNT = `/api/a/bm/${selectedApp}/faas/utils/count`;
-		let URL_DATA = `/api/a/bm/${selectedApp}/faas`;
-		let functionsCount = await get(URL_COUNT, getURLParamsForCount());
-		let functions = await get(URL_DATA, getURLParamsForData(functionsCount));
-		save("functions", functions);
-		functions.forEach((fn: any) => {
-			fn.services = [];
-			backupMapper("functions", fn._id, fn.name);
-			backupMapper("functions_lookup", fn.name, fn._id);
-		});
-		printDone("Functions", functionsCount);
-	} catch (e: any) {
-		logger.error(e.message);
-	}
-}
+// async function fetchFunctions() {
+// 	try {
+// 		let URL_COUNT = `/api/a/bm/${selectedApp}/faas/utils/count`;
+// 		let URL_DATA = `/api/a/bm/${selectedApp}/faas`;
+// 		let functionsCount = await get(URL_COUNT, getURLParamsForCount());
+// 		let functions = await get(URL_DATA, getURLParamsForData(functionsCount));
+// 		save("functions", functions);
+// 		functions.forEach((fn: any) => {
+// 			fn.services = [];
+// 			backupMapper("functions", fn._id, fn.name);
+// 			backupMapper("functions_lookup", fn.name, fn._id);
+// 		});
+// 		printDone("Functions", functionsCount);
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
 
 async function fetchConnectors() {
 	try {
@@ -170,6 +171,24 @@ async function fetchPlugins() {
 			backupMapper("plugins_lookup", plugin.name, plugin._id);
 		});
 		printDone("Plugins", pluginCount);
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
+async function fetchMyNodes() {
+	try {
+		const URL_DATA = `/api/a/bm/${selectedApp}/my-node`;
+		let searchParams = getURLParamsForCount();
+		searchParams.append("countOnly", "true");
+		const myNodeCount = await get(URL_DATA, searchParams);
+		const myNodes = await get(URL_DATA, getURLParamsForData(myNodeCount));
+		save("myNodes", myNodes);
+		myNodes.forEach((myNode: any) => {
+			backupMapper("myNodes", myNode._id, myNode.label);
+			backupMapper("myNodes_lookup", myNode.label, myNode._id);
+		});
+		printDone("MyNodes", myNodeCount);
 	} catch (e: any) {
 		logger.error(e.message);
 	}

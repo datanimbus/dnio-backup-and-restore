@@ -59,6 +59,10 @@ function updateTheDependencyMatrixOfDataPipes(id: string, newDependencyMatrix: a
 		childDPDM.plugins
 			.filter((id: string) => newDependencyMatrix.plugins.indexOf(id) == -1)
 			.forEach((id: string) => newDependencyMatrix.plugins.push(id));
+		// merge myNodes
+		childDPDM.myNodes
+			.filter((id: string) => newDependencyMatrix.myNodes.indexOf(id) == -1)
+			.forEach((id: string) => newDependencyMatrix.myNodes.push(id));
 		// merge libraries
 		childDPDM.libraries
 			.filter((id: string) => newDependencyMatrix.libraries.indexOf(id) == -1)

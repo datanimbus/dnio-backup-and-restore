@@ -20,6 +20,7 @@ exports.generateSampleDataPipe = generateSampleDataPipe;
 function buildDependencyMatrixForDataPipe(datapipes) {
     const mapperformulaIDs = Object.keys((0, lib_db_1.readBackupMap)("mapperformulas"));
     const pluginIDs = Object.keys((0, lib_db_1.readBackupMap)("plugins"));
+    const myNodesIDs = Object.keys((0, lib_db_1.readBackupMap)("myNodes"));
     const dataServiceIDs = Object.keys((0, lib_db_1.readBackupMap)("dataservices"));
     const dataformatIDs = Object.keys((0, lib_db_1.readBackupMap)("dataformats"));
     const functionIDs = Object.keys((0, lib_db_1.readBackupMap)("functions"));
@@ -30,6 +31,7 @@ function buildDependencyMatrixForDataPipe(datapipes) {
     datapipes.forEach((datapipe) => {
         const dp = JSON.stringify(datapipe);
         dependencyMatrix[datapipe._id] = {
+            myNodes: myNodesIDs.filter((id) => dp.indexOf(id) !== -1),
             plugins: pluginIDs.filter((id) => dp.indexOf(id) !== -1),
             mapperformulas: mapperformulaIDs.filter((id) => dp.indexOf(id) !== -1),
             dataservices: dataServiceIDs.filter((id) => dp.indexOf(id) !== -1),
@@ -65,6 +67,7 @@ function parseDataPipeAndFixAppName(input, appName) {
 exports.parseDataPipeAndFixAppName = parseDataPipeAndFixAppName;
 function parseAndFixDataPipes(datapipes) {
     const plugins = (0, lib_db_1.readRestoreMap)("plugins");
+    const myNodes = (0, lib_db_1.readRestoreMap)("myNodes");
     const mapperformulas = (0, lib_db_1.readRestoreMap)("mapperFormulas");
     const functions = (0, lib_db_1.readRestoreMap)("functions");
     const dataservices = (0, lib_db_1.readRestoreMap)("dataservices");
@@ -79,6 +82,7 @@ function parseAndFixDataPipes(datapipes) {
     datapipes.forEach((datapipe) => {
         let dp = JSON.stringify(datapipe);
         const dependencyMatrix = dependencyMatrixOfDataPipe[datapipe._id];
+        dependencyMatrix.myNodes.forEach((myNodeId) => dp = dp.split(myNodeId).join(myNodes[myNodeId]));
         dependencyMatrix.plugins.forEach((pluginId) => dp = dp.split(pluginId).join(plugins[pluginId]));
         dependencyMatrix.mapperformulas.forEach((mapperformulaId) => dp = dp.split(mapperformulaId).join(mapperformulas[mapperformulaId]));
         dependencyMatrix.dataservices.forEach((dataservicesId) => dp = dp.split(dataservicesId).join(dataservices[dataservicesId]));

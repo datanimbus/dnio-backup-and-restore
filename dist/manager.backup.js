@@ -42,16 +42,17 @@ function backupManager(apps) {
         (0, lib_db_1.backupInit)();
         (0, lib_misc_1.printInfo)(`Selected app: ${selectedApp}`);
         (0, lib_misc_1.printInfo)("Scanning the configurations within the app...");
-        yield fetchDataServices();
         yield fetchLibraries();
-        yield fetchFunctions();
+        // await fetchFunctions();
         yield fetchConnectors();
         yield fetchDataFormats();
-        yield fetchDataPipes();
         yield fetchAgents();
         yield fetchPlugins();
+        yield fetchMyNodes();
         yield fetchMapperFormulas();
         yield fetchGroups();
+        yield fetchDataServices();
+        yield fetchDataPipes();
         (0, lib_dependencyMatrix_1.recalculateDependencyMatrix)();
         yield customiseBackup();
         (0, lib_misc_1.header)("Backup complete!");
@@ -98,26 +99,23 @@ function fetchLibraries() {
         }
     });
 }
-function fetchFunctions() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            let URL_COUNT = `/api/a/bm/${selectedApp}/faas/utils/count`;
-            let URL_DATA = `/api/a/bm/${selectedApp}/faas`;
-            let functionsCount = yield (0, manager_api_1.get)(URL_COUNT, getURLParamsForCount());
-            let functions = yield (0, manager_api_1.get)(URL_DATA, getURLParamsForData(functionsCount));
-            (0, lib_db_1.save)("functions", functions);
-            functions.forEach((fn) => {
-                fn.services = [];
-                (0, lib_db_1.backupMapper)("functions", fn._id, fn.name);
-                (0, lib_db_1.backupMapper)("functions_lookup", fn.name, fn._id);
-            });
-            (0, lib_misc_1.printDone)("Functions", functionsCount);
-        }
-        catch (e) {
-            logger.error(e.message);
-        }
-    });
-}
+// async function fetchFunctions() {
+// 	try {
+// 		let URL_COUNT = `/api/a/bm/${selectedApp}/faas/utils/count`;
+// 		let URL_DATA = `/api/a/bm/${selectedApp}/faas`;
+// 		let functionsCount = await get(URL_COUNT, getURLParamsForCount());
+// 		let functions = await get(URL_DATA, getURLParamsForData(functionsCount));
+// 		save("functions", functions);
+// 		functions.forEach((fn: any) => {
+// 			fn.services = [];
+// 			backupMapper("functions", fn._id, fn.name);
+// 			backupMapper("functions_lookup", fn.name, fn._id);
+// 		});
+// 		printDone("Functions", functionsCount);
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
 function fetchConnectors() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -191,6 +189,26 @@ function fetchPlugins() {
                 (0, lib_db_1.backupMapper)("plugins_lookup", plugin.name, plugin._id);
             });
             (0, lib_misc_1.printDone)("Plugins", pluginCount);
+        }
+        catch (e) {
+            logger.error(e.message);
+        }
+    });
+}
+function fetchMyNodes() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const URL_DATA = `/api/a/bm/${selectedApp}/my-node`;
+            let searchParams = getURLParamsForCount();
+            searchParams.append("countOnly", "true");
+            const myNodeCount = yield (0, manager_api_1.get)(URL_DATA, searchParams);
+            const myNodes = yield (0, manager_api_1.get)(URL_DATA, getURLParamsForData(myNodeCount));
+            (0, lib_db_1.save)("myNodes", myNodes);
+            myNodes.forEach((myNode) => {
+                (0, lib_db_1.backupMapper)("myNodes", myNode._id, myNode.label);
+                (0, lib_db_1.backupMapper)("myNodes_lookup", myNode.label, myNode._id);
+            });
+            (0, lib_misc_1.printDone)("MyNodes", myNodeCount);
         }
         catch (e) {
             logger.error(e.message);

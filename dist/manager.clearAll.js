@@ -43,7 +43,7 @@ function clearAllManager(apps) {
         yield clearDataFormats();
         yield clearDataServices();
         yield clearConnectors();
-        yield clearFunctions();
+        // await clearFunctions();
         yield clearLibrary();
         (0, lib_misc_1.header)("Cleanup complete!");
     });

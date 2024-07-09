@@ -29,6 +29,7 @@ export async function restoreManager(apps: any) {
 	await restoreDataFormats();
 	await restoreAgents();
 	await restorePlugins();
+	await restoreMyNodes();
 	await restoreMapperFormulas();
 	await restoreDataPipes();
 	await restoreGroups();
@@ -54,12 +55,16 @@ async function configExists(api: string, name: string, selectedApp: string) {
 
 async function insert(type: string, baseURL: string, selectedApp: string, backedUpData: any): Promise<any> {
 	try {
-		logger.info(`${selectedApp} : Insert ${type} : ${backedUpData.name}`);
+		let name = backedUpData.name;
+		if (!name) {
+			name = backedUpData.label;
+		}
+		logger.info(`${selectedApp} : Insert ${type} : ${name}`);
 		let data = JSON.parse(JSON.stringify(backedUpData));
 		data.app = selectedApp;
 		delete data._id;
 		let newData = await post(baseURL, data);
-		printInfo(`${type} created : ${backedUpData.name}`);
+		printInfo(`${type} created : ${name}`);
 		logger.info(JSON.stringify(newData));
 		return newData;
 	} catch (e: any) {
@@ -69,14 +74,18 @@ async function insert(type: string, baseURL: string, selectedApp: string, backed
 
 async function update(type: string, baseURL: string, selectedApp: string, backedUpData: any, existinID: string): Promise<any> {
 	try {
-		logger.info(`${selectedApp} : Update ${type} : ${backedUpData.name}`);
+		let name = backedUpData.name;
+		if (!name) {
+			name = backedUpData.label;
+		}
+		logger.info(`${selectedApp} : Update ${type} : ${name}`);
 		let data = JSON.parse(JSON.stringify(backedUpData));
 		data.app = selectedApp;
 		data._id = existinID;
 		delete data.status;
 		let updateURL = `${baseURL}/${existinID}`;
 		let newData = await put(updateURL, data);
-		printInfo(`${type} updated : ${backedUpData.name}`);
+		printInfo(`${type} updated : ${name}`);
 		logger.info(JSON.stringify(newData));
 		return newData;
 	} catch (e: any) {
@@ -106,33 +115,33 @@ async function restoreLibrary() {
 	}
 }
 
-async function restoreFunctions() {
-	try {
-		let functions = read("functions");
-		if (functions.length < 1) return;
-		header("Functions");
-		printInfo(`Functions to restore - ${functions.length}`);
-		let BASE_URL = `/api/a/bm/${selectedApp}/faas`;
-		await functions.reduce(async (prev: any, fn: any) => {
-			await prev;
-			delete fn._metadata;
-			delete fn.__v;
-			delete fn.version;
-			delete fn.lastInvoked;
-			let existingID = await configExists(BASE_URL, fn.name, selectedApp);
-			let newData = null;
-			if (existingID) newData = await update("Function", BASE_URL, selectedApp, fn, existingID);
-			else {
-				newData = await insert("Function", BASE_URL, selectedApp, fn);
-				newData = await update("Function", BASE_URL, selectedApp, fn, newData._id);
-			}
-			restoreMapper("functions", fn._id, newData._id);
-			restoreMapper("functionURL", newData._id, newData.url);
-		}, Promise.resolve());
-	} catch (e: any) {
-		logger.error(e.message);
-	}
-}
+// async function restoreFunctions() {
+// 	try {
+// 		let functions = read("functions");
+// 		if (functions.length < 1) return;
+// 		header("Functions");
+// 		printInfo(`Functions to restore - ${functions.length}`);
+// 		let BASE_URL = `/api/a/bm/${selectedApp}/faas`;
+// 		await functions.reduce(async (prev: any, fn: any) => {
+// 			await prev;
+// 			delete fn._metadata;
+// 			delete fn.__v;
+// 			delete fn.version;
+// 			delete fn.lastInvoked;
+// 			let existingID = await configExists(BASE_URL, fn.name, selectedApp);
+// 			let newData = null;
+// 			if (existingID) newData = await update("Function", BASE_URL, selectedApp, fn, existingID);
+// 			else {
+// 				newData = await insert("Function", BASE_URL, selectedApp, fn);
+// 				newData = await update("Function", BASE_URL, selectedApp, fn, newData._id);
+// 			}
+// 			restoreMapper("functions", fn._id, newData._id);
+// 			restoreMapper("functionURL", newData._id, newData.url);
+// 		}, Promise.resolve());
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
 
 async function restoreConnectors() {
 	try {
@@ -273,7 +282,7 @@ async function restorePlugins() {
 		if (plugins.length < 1) return;
 		header("Plugins");
 		printInfo(`Plugins to restore - ${plugins.length}`);
-		let BASE_URL = `/api/a/bm/${selectedApp}/node`;
+		let BASE_URL = `/api/a/bm/${selectedApp}/plugin`;
 		await plugins.reduce(async (prev: any, plugin: any) => {
 			await prev;
 			delete plugin._metadata;
@@ -284,6 +293,29 @@ async function restorePlugins() {
 			if (existingID) newData = await update("Plugin", BASE_URL, selectedApp, plugin, existingID);
 			else newData = await insert("Plugin", BASE_URL, selectedApp, plugin);
 			restoreMapper("plugins", plugin._id, newData._id);
+		}, Promise.resolve());
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
+async function restoreMyNodes() {
+	try {
+		let myNodes = read("myNodes");
+		if (myNodes.length < 1) return;
+		header("My Nodes");
+		printInfo(`My Nodes to restore - ${myNodes.length}`);
+		let BASE_URL = `/api/a/bm/${selectedApp}/my-node`;
+		await myNodes.reduce(async (prev: any, myNode: any) => {
+			await prev;
+			delete myNode._metadata;
+			delete myNode.__v;
+			delete myNode.version;
+			let existingID = await configExists(BASE_URL, myNode.label, selectedApp);
+			let newData = null;
+			if (existingID) newData = await update("MyNode", BASE_URL, selectedApp, myNode, existingID);
+			else newData = await insert("MyNode", BASE_URL, selectedApp, myNode);
+			restoreMapper("myNodes", myNode._id, newData._id);
 		}, Promise.resolve());
 	} catch (e: any) {
 		logger.error(e.message);
