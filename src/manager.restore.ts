@@ -53,6 +53,22 @@ async function configExists(api: string, name: string, selectedApp: string) {
 	}
 }
 
+async function configExistsWithLabel(api: string, label: string, selectedApp: string) {
+	try {
+		let searchParams = new URLSearchParams();
+		searchParams.append("filter", JSON.stringify({ app: selectedApp, label: label }));
+		searchParams.append("count", "-1");
+		searchParams.append("select", "label");
+		logger.debug(`Check for existing config - ${api} ${searchParams}`);
+		let data = await get(api, searchParams);
+		logger.debug(`Check for existing config result - ${api} : ${JSON.stringify(data)}`);
+		if (data.length > 0 && data[0]._id) return data[0]._id;
+		return null;
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
 async function insert(type: string, baseURL: string, selectedApp: string, backedUpData: any): Promise<any> {
 	try {
 		let name = backedUpData.name;
@@ -311,7 +327,7 @@ async function restoreMyNodes() {
 			delete myNode._metadata;
 			delete myNode.__v;
 			delete myNode.version;
-			let existingID = await configExists(BASE_URL, myNode.label, selectedApp);
+			let existingID = await configExistsWithLabel(BASE_URL, myNode.label, selectedApp);
 			let newData = null;
 			if (existingID) newData = await update("MyNode", BASE_URL, selectedApp, myNode, existingID);
 			else newData = await insert("MyNode", BASE_URL, selectedApp, myNode);

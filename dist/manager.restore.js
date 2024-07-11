@@ -64,6 +64,25 @@ function configExists(api, name, selectedApp) {
         }
     });
 }
+function configExistsWithLabel(api, label, selectedApp) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let searchParams = new URLSearchParams();
+            searchParams.append("filter", JSON.stringify({ app: selectedApp, label: label }));
+            searchParams.append("count", "-1");
+            searchParams.append("select", "label");
+            logger.debug(`Check for existing config - ${api} ${searchParams}`);
+            let data = yield (0, manager_api_1.get)(api, searchParams);
+            logger.debug(`Check for existing config result - ${api} : ${JSON.stringify(data)}`);
+            if (data.length > 0 && data[0]._id)
+                return data[0]._id;
+            return null;
+        }
+        catch (e) {
+            logger.error(e.message);
+        }
+    });
+}
 function insert(type, baseURL, selectedApp, backedUpData) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -351,7 +370,7 @@ function restoreMyNodes() {
                 delete myNode._metadata;
                 delete myNode.__v;
                 delete myNode.version;
-                let existingID = yield configExists(BASE_URL, myNode.label, selectedApp);
+                let existingID = yield configExistsWithLabel(BASE_URL, myNode.label, selectedApp);
                 let newData = null;
                 if (existingID)
                     newData = yield update("MyNode", BASE_URL, selectedApp, myNode, existingID);
