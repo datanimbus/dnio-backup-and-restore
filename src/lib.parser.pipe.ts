@@ -64,35 +64,35 @@ export function parseDataPipeAndFixAppName(input: any, appName: string) {
 }
 
 export function parseAndFixDataPipes(datapipes: any[]): any[] {
-	const plugins = readRestoreMap("plugins");
-	const myNodes = readRestoreMap("myNodes");
-	const mapperformulas = readRestoreMap("mapperFormulas");
-	const functions = readRestoreMap("functions");
-	const dataservices = readRestoreMap("dataservices");
-	const datapipeIDs = readRestoreMap("datapipes");
-	const dataformats = readRestoreMap("dataformats");
-	const connectors = readRestoreMap("connectors");
-	const agents = readRestoreMap("agents");
+	const plugins = readRestoreMap("plugins") || {};
+	const myNodes = readRestoreMap("myNodes") || {};
+	const mapperformulas = readRestoreMap("mapperFormulas") || {};
+	const functions = readRestoreMap("functions") || {};
+	const dataservices = readRestoreMap("dataservices") || {};
+	const datapipeIDs = readRestoreMap("datapipes") || {};
+	const dataformats = readRestoreMap("dataformats") || {};
+	const connectors = readRestoreMap("connectors") || {};
+	const agents = readRestoreMap("agents") || {};
 	const agentIDsFromBackup = readBackupMap("agentIDs");
-	const agentIDsFromRestore = readRestoreMap("agentIDs");
+	const agentIDsFromRestore = readRestoreMap("agentIDs") || {};
 	const dependencyMatrixOfDataPipe = readDependencyMatrixOfDataPipes();
 	let fixedDataPipes: any[] = [];
 	datapipes.forEach((datapipe: any) => {
 		let dp = JSON.stringify(datapipe);
 		const dependencyMatrix = dependencyMatrixOfDataPipe[datapipe._id];
-		dependencyMatrix.myNodes.forEach((myNodeId: any) => dp = dp.split(myNodeId).join(myNodes[myNodeId]));
-		dependencyMatrix.plugins.forEach((pluginId: any) => dp = dp.split(pluginId).join(plugins[pluginId]));
-		dependencyMatrix.mapperformulas.forEach((mapperformulaId: any) => dp = dp.split(mapperformulaId).join(mapperformulas[mapperformulaId]));
-		dependencyMatrix.dataservices.forEach((dataservicesId: any) => dp = dp.split(dataservicesId).join(dataservices[dataservicesId]));
-		dependencyMatrix.dataformats.forEach((dataformatId: any) => dp = dp.split(dataformatId).join(dataformats[dataformatId]));
-		dependencyMatrix.functions.forEach((functionId: any) => dp = dp.split(functionId).join(functions[functionId]));
-		dependencyMatrix.datapipes.forEach((datapipeID: any) => dp = dp.split(datapipeID).join(datapipeIDs[datapipeID]));
-		dependencyMatrix.agents.forEach((agentId: any) => {
+		(dependencyMatrix.myNodes || []).forEach((myNodeId: any) => dp = dp.split(myNodeId).join(myNodes[myNodeId]));
+		(dependencyMatrix.plugins || []).forEach((pluginId: any) => dp = dp.split(pluginId).join(plugins[pluginId]));
+		(dependencyMatrix.mapperformulas || []).forEach((mapperformulaId: any) => dp = dp.split(mapperformulaId).join(mapperformulas[mapperformulaId]));
+		(dependencyMatrix.dataservices || []).forEach((dataservicesId: any) => dp = dp.split(dataservicesId).join(dataservices[dataservicesId]));
+		(dependencyMatrix.dataformats || []).forEach((dataformatId: any) => dp = dp.split(dataformatId).join(dataformats[dataformatId]));
+		(dependencyMatrix.functions || []).forEach((functionId: any) => dp = dp.split(functionId).join(functions[functionId]));
+		(dependencyMatrix.datapipes || []).forEach((datapipeID: any) => dp = dp.split(datapipeID).join(datapipeIDs[datapipeID]));
+		(dependencyMatrix.agents || []).forEach((agentId: any) => {
 			dp = dp.split(agentId).join(agents[agentId]);
 			let backupAgentId = agentIDsFromBackup[agentId];
 			dp = dp.split(backupAgentId).join(agentIDsFromRestore[backupAgentId]);
 		});
-		dependencyMatrix.connectors.forEach((connectorId: any) => dp = dp.split(connectorId).join(connectors[connectorId]));
+		(dependencyMatrix.connectors || []).forEach((connectorId: any) => dp = dp.split(connectorId).join(connectors[connectorId]));
 		fixedDataPipes.push(JSON.parse(dp));
 	});
 	return fixedDataPipes;
