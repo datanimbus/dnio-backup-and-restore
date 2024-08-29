@@ -189,7 +189,7 @@ function restoreConnectors() {
                 return;
             (0, lib_misc_1.header)("Connectors");
             (0, lib_misc_1.printInfo)(`Connectors to restore - ${connectors.length}`);
-            let BASE_URL = `/api/a/rbac/${selectedApp}/connector`;
+            let BASE_URL = `/api/a/bm/${selectedApp}/connector`;
             let searchParams = new URLSearchParams();
             searchParams.append("filter", JSON.stringify({ app: selectedApp }));
             searchParams.append("select", "name, options");
