@@ -165,7 +165,7 @@ async function restoreConnectors() {
 		if (connectors.length < 1) return;
 		header("Connectors");
 		printInfo(`Connectors to restore - ${connectors.length}`);
-		let BASE_URL = `/api/a/rbac/${selectedApp}/connector`;
+		let BASE_URL = `/api/a/bm/${selectedApp}/connector`;
 		let searchParams = new URLSearchParams();
 		searchParams.append("filter", JSON.stringify({ app: selectedApp }));
 		searchParams.append("select", "name, options");
