@@ -35,7 +35,7 @@ export async function backupManager(apps: any) {
 	printInfo(`Selected app: ${selectedApp}`);
 	printInfo("Scanning the configurations within the app...");
 
-	await fetchLibraries();
+	// await fetchLibraries();
 	// await fetchFunctions();
 	await fetchConnectors();
 	await fetchDataFormats();
@@ -69,23 +69,23 @@ async function fetchDataServices() {
 	}
 }
 
-async function fetchLibraries() {
-	try {
-		var URL_COUNT = `/api/a/sm/${selectedApp}/globalSchema/utils/count`;
-		var URL_DATA = `/api/a/sm/${selectedApp}/globalSchema`;
-		const librariesCount = await get(URL_COUNT, getURLParamsForCount());
-		let libraries = await get(URL_DATA, getURLParamsForData(librariesCount));
-		save("libraries", libraries);
-		libraries.forEach((library: any) => {
-			library.services = [];
-			backupMapper("libraries", library._id, library.name);
-			backupMapper("libraries_lookup", library.name, library._id);
-		});
-		printDone("Libraries", librariesCount);
-	} catch (e: any) {
-		logger.error(e.message);
-	}
-}
+// async function fetchLibraries() {
+// 	try {
+// 		var URL_COUNT = `/api/a/sm/${selectedApp}/globalSchema/utils/count`;
+// 		var URL_DATA = `/api/a/sm/${selectedApp}/globalSchema`;
+// 		const librariesCount = await get(URL_COUNT, getURLParamsForCount());
+// 		let libraries = await get(URL_DATA, getURLParamsForData(librariesCount));
+// 		save("libraries", libraries);
+// 		libraries.forEach((library: any) => {
+// 			library.services = [];
+// 			backupMapper("libraries", library._id, library.name);
+// 			backupMapper("libraries_lookup", library.name, library._id);
+// 		});
+// 		printDone("Libraries", librariesCount);
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
 
 // async function fetchFunctions() {
 // 	try {

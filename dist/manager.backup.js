@@ -42,7 +42,7 @@ function backupManager(apps) {
         (0, lib_db_1.backupInit)();
         (0, lib_misc_1.printInfo)(`Selected app: ${selectedApp}`);
         (0, lib_misc_1.printInfo)("Scanning the configurations within the app...");
-        yield fetchLibraries();
+        // await fetchLibraries();
         // await fetchFunctions();
         yield fetchConnectors();
         yield fetchDataFormats();
@@ -79,26 +79,23 @@ function fetchDataServices() {
         }
     });
 }
-function fetchLibraries() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            var URL_COUNT = `/api/a/sm/${selectedApp}/globalSchema/utils/count`;
-            var URL_DATA = `/api/a/sm/${selectedApp}/globalSchema`;
-            const librariesCount = yield (0, manager_api_1.get)(URL_COUNT, getURLParamsForCount());
-            let libraries = yield (0, manager_api_1.get)(URL_DATA, getURLParamsForData(librariesCount));
-            (0, lib_db_1.save)("libraries", libraries);
-            libraries.forEach((library) => {
-                library.services = [];
-                (0, lib_db_1.backupMapper)("libraries", library._id, library.name);
-                (0, lib_db_1.backupMapper)("libraries_lookup", library.name, library._id);
-            });
-            (0, lib_misc_1.printDone)("Libraries", librariesCount);
-        }
-        catch (e) {
-            logger.error(e.message);
-        }
-    });
-}
+// async function fetchLibraries() {
+// 	try {
+// 		var URL_COUNT = `/api/a/sm/${selectedApp}/globalSchema/utils/count`;
+// 		var URL_DATA = `/api/a/sm/${selectedApp}/globalSchema`;
+// 		const librariesCount = await get(URL_COUNT, getURLParamsForCount());
+// 		let libraries = await get(URL_DATA, getURLParamsForData(librariesCount));
+// 		save("libraries", libraries);
+// 		libraries.forEach((library: any) => {
+// 			library.services = [];
+// 			backupMapper("libraries", library._id, library.name);
+// 			backupMapper("libraries_lookup", library.name, library._id);
+// 		});
+// 		printDone("Libraries", librariesCount);
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
 // async function fetchFunctions() {
 // 	try {
 // 		let URL_COUNT = `/api/a/bm/${selectedApp}/faas/utils/count`;

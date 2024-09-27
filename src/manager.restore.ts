@@ -22,11 +22,11 @@ export async function restoreManager(apps: any) {
 	printInfo("Scanning the configurations...");
 
 
-	await restoreLibrary();
+	// await restoreLibrary();
 	// await restoreFunctions();
 	await restoreConnectors();
-	await restoreDataServices();
 	await restoreDataFormats();
+	await restoreDataServices();
 	await restoreAgents();
 	await restorePlugins();
 	await restoreMyNodes();
@@ -110,26 +110,26 @@ async function update(type: string, baseURL: string, selectedApp: string, backed
 }
 
 // App level restores
-async function restoreLibrary() {
-	try {
-		let libraries = read("libraries");
-		if (libraries.length < 1) return;
-		header("Library");
-		printInfo(`Libraries to restore - ${libraries.length}`);
-		let BASE_URL = `/api/a/sm/${selectedApp}/globalSchema`;
-		await libraries.reduce(async (prev: any, library: any) => {
-			await prev;
-			delete library.services;
-			let existingID = await configExists(BASE_URL, library.name, selectedApp);
-			let newData = null;
-			if (existingID) newData = await update("Library", BASE_URL, selectedApp, library, existingID);
-			else newData = await insert("Library", BASE_URL, selectedApp, library);
-			restoreMapper("libraries", library._id, newData._id);
-		}, Promise.resolve());
-	} catch (e: any) {
-		logger.error(e.message);
-	}
-}
+// async function restoreLibrary() {
+// 	try {
+// 		let libraries = read("libraries");
+// 		if (libraries.length < 1) return;
+// 		header("Library");
+// 		printInfo(`Libraries to restore - ${libraries.length}`);
+// 		let BASE_URL = `/api/a/sm/${selectedApp}/globalSchema`;
+// 		await libraries.reduce(async (prev: any, library: any) => {
+// 			await prev;
+// 			delete library.services;
+// 			let existingID = await configExists(BASE_URL, library.name, selectedApp);
+// 			let newData = null;
+// 			if (existingID) newData = await update("Library", BASE_URL, selectedApp, library, existingID);
+// 			else newData = await insert("Library", BASE_URL, selectedApp, library);
+// 			restoreMapper("libraries", library._id, newData._id);
+// 		}, Promise.resolve());
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
 
 // async function restoreFunctions() {
 // 	try {

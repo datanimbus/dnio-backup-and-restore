@@ -29,11 +29,11 @@ function restoreManager(apps) {
         (0, lib_misc_1.printInfo)(`Backup file being used - ${global.backupFileName}`);
         (0, lib_db_1.restoreInit)();
         (0, lib_misc_1.printInfo)("Scanning the configurations...");
-        yield restoreLibrary();
+        // await restoreLibrary();
         // await restoreFunctions();
         yield restoreConnectors();
-        yield restoreDataServices();
         yield restoreDataFormats();
+        yield restoreDataServices();
         yield restoreAgents();
         yield restorePlugins();
         yield restoreMyNodes();
@@ -128,32 +128,26 @@ function update(type, baseURL, selectedApp, backedUpData, existinID) {
     });
 }
 // App level restores
-function restoreLibrary() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            let libraries = (0, lib_db_1.read)("libraries");
-            if (libraries.length < 1)
-                return;
-            (0, lib_misc_1.header)("Library");
-            (0, lib_misc_1.printInfo)(`Libraries to restore - ${libraries.length}`);
-            let BASE_URL = `/api/a/sm/${selectedApp}/globalSchema`;
-            yield libraries.reduce((prev, library) => __awaiter(this, void 0, void 0, function* () {
-                yield prev;
-                delete library.services;
-                let existingID = yield configExists(BASE_URL, library.name, selectedApp);
-                let newData = null;
-                if (existingID)
-                    newData = yield update("Library", BASE_URL, selectedApp, library, existingID);
-                else
-                    newData = yield insert("Library", BASE_URL, selectedApp, library);
-                (0, lib_db_1.restoreMapper)("libraries", library._id, newData._id);
-            }), Promise.resolve());
-        }
-        catch (e) {
-            logger.error(e.message);
-        }
-    });
-}
+// async function restoreLibrary() {
+// 	try {
+// 		let libraries = read("libraries");
+// 		if (libraries.length < 1) return;
+// 		header("Library");
+// 		printInfo(`Libraries to restore - ${libraries.length}`);
+// 		let BASE_URL = `/api/a/sm/${selectedApp}/globalSchema`;
+// 		await libraries.reduce(async (prev: any, library: any) => {
+// 			await prev;
+// 			delete library.services;
+// 			let existingID = await configExists(BASE_URL, library.name, selectedApp);
+// 			let newData = null;
+// 			if (existingID) newData = await update("Library", BASE_URL, selectedApp, library, existingID);
+// 			else newData = await insert("Library", BASE_URL, selectedApp, library);
+// 			restoreMapper("libraries", library._id, newData._id);
+// 		}, Promise.resolve());
+// 	} catch (e: any) {
+// 		logger.error(e.message);
+// 	}
+// }
 // async function restoreFunctions() {
 // 	try {
 // 		let functions = read("functions");
