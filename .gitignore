@@ -15,3 +15,4 @@ builds
 coverage
 .nyc_output
 test.js
+.DS_Store

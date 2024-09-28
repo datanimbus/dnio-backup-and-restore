@@ -287,9 +287,13 @@ async function customiseBackup() {
 	let selectedAgents: string[] = [];
 	(await selections("Agents", Object.keys(agentsLookup).sort())).forEach((agent: string) => selectedAgents.push(agentsLookup[agent]));
 
-	let pluginsLookup = readBackupMap("plugins_lookup");
-	let selectedPlugins: string[] = [];
-	(await selections("Plugins", Object.keys(pluginsLookup).sort())).forEach((plugin: string) => selectedPlugins.push(pluginsLookup[plugin]));
+	// let pluginsLookup = readBackupMap("plugins_lookup");
+	// let selectedPlugins: string[] = [];
+	// (await selections("Plugins", Object.keys(pluginsLookup).sort())).forEach((plugin: string) => selectedPlugins.push(pluginsLookup[plugin]));
+
+	let myNodesLookup = readBackupMap("myNodes_lookup");
+	let selectedMyNodes: string[] = [];
+	(await selections("My Nodes", Object.keys(myNodesLookup).sort())).forEach((myNode: string) => selectedMyNodes.push(myNodesLookup[myNode]));
 
 	let mapperformulasLookup = readBackupMap("mapperformulas_lookup");
 	let selectedMapperFormulas: string[] = [];
