@@ -10,12 +10,34 @@ const utils = require('./utils');
 
 const logger = log4js.getLogger('bnr.controller');
 
-router.post('/get/dependencies', async (req, res) => {
+router.post('/db/dependencies', async (req, res) => {
     try {
         const flowList = req.body;
         const flowDetails = await Promise.all(flowList.map((flow) => {
             return mongoService.mongoFindOne('b2b.flows', { _id: flow._id })
         }));
+        const payload = {};
+        payload.dataFormatIds = _.uniq(utils.collectAllDataFormatIds(flowDetails));
+        payload.dataServiceIds = _.uniq(utils.collectAllDataServiceIds(flowDetails));
+        payload.connectorIds = _.uniq(utils.collectAllConnectorIds(flowDetails));
+        payload.pluginIds = _.uniq(utils.collectAllPluginIds(flowDetails));
+        payload.agentIds = _.uniq(utils.collectAllAgentIds(flowDetails));
+        payload.flowIds = _.uniq(utils.collectAllFlowIds(flowDetails));
+        res.status(200).json(payload);
+    } catch (err) {
+        logger.error(err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+router.post('/file/dependencies', async (req, res) => {
+    try {
+        const content = fs.readFileSync(req.session.file.path, 'utf8');
+        const jsonData = JSON.parse(content);
+        const flowList = req.body;
+        const flowDetails = flowList.map((flow) => {
+            return jsonData.data.datapipes.find((f) => f._id === flow._id);
+        });
         const payload = {};
         payload.dataFormatIds = _.uniq(utils.collectAllDataFormatIds(flowDetails));
         payload.dataServiceIds = _.uniq(utils.collectAllDataServiceIds(flowDetails));

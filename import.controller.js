@@ -58,11 +58,12 @@ router.post('/start/custom', async (req, res) => {
         const content = fs.readFileSync(req.session.file.path, 'utf8');
         const jsonData = JSON.parse(content);
         const payload = {};
-        Object.keys(collectionMap).forEach((key) => {
-            if (selectedData[key]) {
-                payload[key] = jsonData.data[key].filter((item) => selectedData[key].includes(item._id));
+        Object.keys(collectionMap).forEach((collection) => {
+            const jsonKey = collectionMap[collection].jsonKey;
+            if (selectedData[jsonKey]) {
+                payload[jsonKey] = jsonData.data[jsonKey].filter((item) => selectedData[jsonKey].find((e) => e._id === item._id));
             } else {
-                payload[key] = jsonData.data[key];
+                payload[jsonKey] = jsonData.data[jsonKey];
             }
         });
         await importData(req, app, payload);
@@ -83,6 +84,12 @@ async function importData(req, app, jsonData) {
         const jsonKey = collectionMap[collection].jsonKey;
         const filterKey = collectionMap[collection].filterKey;
         const label = collectionMap[collection].label;
+        if (!jsonData[jsonKey] || jsonData[jsonKey].length === 0) {
+            req.session.statusList.push({ timestamp: Date.now(), message: `**************************************************` });
+            req.session.statusList.push({ timestamp: Date.now(), message: `No ${label} to import.` });
+            req.session.statusList.push({ timestamp: Date.now(), message: `**************************************************` });
+            return Promise.resolve();
+        }
         logger.info(`Importing ${label}...`);
         req.session.statusList.push({ timestamp: Date.now(), message: `**************************************************` });
         req.session.statusList.push({ timestamp: Date.now(), message: `Importing ${label}...` });
