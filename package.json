@@ -24,6 +24,7 @@
   "homepage": "https://github.com/datanimbus/dnio-backup-and-restore#readme",
   "dependencies": {
     "commander": "^9.3.0",
+    "csv-parser": "^3.2.0",
     "got": "^11.8.3",
     "inquirer": "^8.2.1",
     "inquirer-autocomplete-prompt": "^2.0.0",

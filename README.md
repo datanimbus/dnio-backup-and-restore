@@ -7,17 +7,19 @@ Usage: dnio-backup-and-restore [options] [command]
 CLI utility to backup and restore data.stack configurations.
 
 Options:
-  -V, --version                        output the version number
-  -h, --host <URL>                     data.stack server to connect.
-  -u, --username <username>            data.stack username.
-  -p, --password <password>            data.stack password.
-  -b, --backupfile <backup JSON file>  Custom backup file to use during backup or restore
-  --help                               display help for command
+  -V, --version                                  output the version number
+  -h, --host <URL>                               data.stack server to connect.
+  -u, --username <username>                      data.stack username.
+  -p, --password <password>                      data.stack password.
+  -a, --app <app name>                           data.stack app name.
+  -b, --backupfile <backup JSON file>            Custom backup file to use during backup or restore
+  -c, --backup-config-path <backup config path>  Custom backup config path
+  --help                                         display help for command
 
 Commands:
-  backup                               backup configuration.
-  restore                              Restore configuration.
-  clear                                Clear all configuration.
+  backup              backup configuration.
+  restore             Restore configuration.
+  clear               Clear all configuration.
 ```
 
 # Table of contents
@@ -78,6 +80,14 @@ dnio-backup-and-restore-linux backup \
   -p "aComplicatedPassword" \
   -a SourceApp
 
+# OPTION 4
+dnio-backup-and-restore-linux \
+  -h https://datanimbus.myapp.io \
+  -u "mysuperadmin@datanimbus.com" \
+  -p "aComplicatedPassword" \
+  --backup-config-path ./backup-config.csv # refer ./sample-backup-config.csv
+
+# RESTORE
 dnio-backup-and-restore-linux restore \
   -b backup.json \
   -h https://datanimbus.myapp.io \

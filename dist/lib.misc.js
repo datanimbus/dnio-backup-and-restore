@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseCliParams = exports.printDone = exports.printError = exports.printInfo = exports.isNotAnAcceptableValue = exports.stringComparison = exports.header = void 0;
+const path_1 = require("path");
+const fs_1 = require("fs");
+const csv = require('csv-parser');
 let logger = global.logger;
 function header(_s) {
     let totalWidth = 32;
@@ -83,6 +86,24 @@ function parseCliParams(options, timestamp) {
     if (process.env.DS_BR_SINGLELOGFILE) {
         global.backupFileName = "backup.json";
         global.restoreFileName = "restore.json";
+    }
+    global.originalBackupFileName = global.backupFileName;
+    if (options.backupConfigPath) {
+        const filePath = (0, path_1.join)(process.cwd(), options.backupConfigPath);
+        global.backupConfigs = {};
+        (0, fs_1.createReadStream)(filePath)
+            .pipe(csv())
+            .on('data', (row) => {
+            const { app, type, _id } = row;
+            if (!global.backupConfigs[app]) {
+                global.backupConfigs[app] = {};
+            }
+            if (!global.backupConfigs[app][type]) {
+                global.backupConfigs[app][type] = [];
+            }
+            global.backupConfigs[app][type].push(_id);
+        })
+            .on('end', () => { });
     }
     if (options.host)
         process.env.DS_BR_HOST = options.host;

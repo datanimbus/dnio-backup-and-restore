@@ -25,6 +25,36 @@ function getURLParamsForData(count: number) {
 	return searchParams;
 }
 
+export async function backupFromCsvManager(configs: any) {
+	header("Backup configurations");
+
+	const apps = Object.keys(configs);
+	for (let i = 0; i < apps.length; i++) {
+		const app = apps[i];
+		selectedApp = app;
+		global.selectedApp = app;
+		global.backupFileName = `${app}-${global.originalBackupFileName}`;
+		backupInit();
+		printInfo(`Selected app: ${global.selectedApp}`);
+		printInfo("Scanning the configurations within the app...");
+
+		await fetchLibraries();
+		// await fetchFunctions();
+		await fetchConnectors();
+		await fetchDataFormats();
+		await fetchAgents();
+		await fetchPlugins();
+		await fetchMyNodes();
+		await fetchMapperFormulas();
+		await fetchGroups();
+		await fetchDataServices();
+		await fetchDataPipes();
+		recalculateDependencyMatrix();
+		await customiseBackup(configs[app]);
+	}
+	header("Backup complete!");
+}
+
 export async function backupManager(apps: any) {
 	header("Backup configurations");
 
@@ -250,54 +280,96 @@ async function fetchGroups() {
 	}
 }
 
-async function customiseBackup() {
+async function customiseBackup(backupConfigs?: any) {
 
-	let customisationRequired = await customise();
-	if (!customisationRequired) {
-		printInfo("No backup customizations done.");
-		return;
+	if (!backupConfigs) {
+		let customisationRequired = await customise();
+		if (!customisationRequired) {
+			printInfo("No backup customizations done.");
+			return;
+		}
+		header("Customizing the backup");
 	}
-	header("Customizing the backup");
 
 	let dataservicesLookup = readBackupMap("dataservices_lookup");
 	let selectedDataservices: string[] = [];
-	(await selections("Data Services", Object.keys(dataservicesLookup).sort())).forEach((ds: string) => selectedDataservices.push(dataservicesLookup[ds]));
+	if (backupConfigs) {
+		selectedDataservices = backupConfigs.service || [];
+	} else {
+		(await selections("Data Services", Object.keys(dataservicesLookup).sort())).forEach((ds: string) => selectedDataservices.push(dataservicesLookup[ds]));
+	}
 
 	let datapipesLookup = readBackupMap("datapipes_lookup");
 	let selectedDataPipes: string[] = [];
-	(await selections("Data Pipes", Object.keys(datapipesLookup).sort())).forEach((datapipe: string) => selectedDataPipes.push(datapipesLookup[datapipe]));
+	if (backupConfigs) {
+		selectedDataPipes = backupConfigs.pipe || [];
+	} else {
+		(await selections("Data Pipes", Object.keys(datapipesLookup).sort())).forEach((datapipe: string) => selectedDataPipes.push(datapipesLookup[datapipe]));
+	}
 
 	let librariesLookup = readBackupMap("libraries_lookup");
 	let selectedLibraries: string[] = [];
-	(await selections("Libraries", Object.keys(librariesLookup).sort())).forEach((lib: string) => selectedLibraries.push(librariesLookup[lib]));
+	if (backupConfigs) {
+		selectedLibraries = backupConfigs.library || [];
+	} else {
+		(await selections("Libraries", Object.keys(librariesLookup).sort())).forEach((lib: string) => selectedLibraries.push(librariesLookup[lib]));
+	}
 
 	let functionsLookup = readBackupMap("functions_lookup");
 	let selectedFunctions: string[] = [];
-	(await selections("Functions", Object.keys(functionsLookup).sort())).forEach((fn: string) => selectedFunctions.push(functionsLookup[fn]));
+	if (backupConfigs) {
+		selectedFunctions = backupConfigs.function || [];
+	} else {
+		(await selections("Functions", Object.keys(functionsLookup).sort())).forEach((fn: string) => selectedFunctions.push(functionsLookup[fn]));
+	}
 
 	let connectorsLookup = readBackupMap("connectors_lookup");
 	let selectedConnectors: string[] = [];
-	(await selections("Connectors", Object.keys(connectorsLookup).sort())).forEach((connector: string) => selectedConnectors.push(connectorsLookup[connector]));
+	if (backupConfigs) {
+		selectedConnectors = backupConfigs.connector || [];
+	} else {
+		(await selections("Connectors", Object.keys(connectorsLookup).sort())).forEach((connector: string) => selectedConnectors.push(connectorsLookup[connector]));
+	}
 
 	let dataformatsLookup = readBackupMap("dataformats_lookup");
 	let selectedDataFormats: string[] = [];
-	(await selections("Data Formats", Object.keys(dataformatsLookup).sort())).forEach((dataformat: string) => selectedDataFormats.push(dataformatsLookup[dataformat]));
+	if (backupConfigs) {
+		selectedDataFormats = backupConfigs.format || [];
+	} else {
+		(await selections("Data Formats", Object.keys(dataformatsLookup).sort())).forEach((dataformat: string) => selectedDataFormats.push(dataformatsLookup[dataformat]));
+	}
 
 	let agentsLookup = readBackupMap("agents_lookup");
 	let selectedAgents: string[] = [];
-	(await selections("Agents", Object.keys(agentsLookup).sort())).forEach((agent: string) => selectedAgents.push(agentsLookup[agent]));
+	if (backupConfigs) {
+		selectedAgents = backupConfigs.agent || [];
+	} else {
+		(await selections("Agents", Object.keys(agentsLookup).sort())).forEach((agent: string) => selectedAgents.push(agentsLookup[agent]));
+	}
 
 	let pluginsLookup = readBackupMap("plugins_lookup");
 	let selectedPlugins: string[] = [];
-	(await selections("Plugins", Object.keys(pluginsLookup).sort())).forEach((plugin: string) => selectedPlugins.push(pluginsLookup[plugin]));
+	if (backupConfigs) {
+		selectedPlugins = backupConfigs.plugin || [];
+	} else {
+		(await selections("Plugins", Object.keys(pluginsLookup).sort())).forEach((plugin: string) => selectedPlugins.push(pluginsLookup[plugin]));
+	}
 
 	let mapperformulasLookup = readBackupMap("mapperformulas_lookup");
 	let selectedMapperFormulas: string[] = [];
-	(await selections("Formulas", Object.keys(mapperformulasLookup).sort())).forEach((mf: string) => selectedMapperFormulas.push(mapperformulasLookup[mf]));
+	if (backupConfigs) {
+		selectedMapperFormulas = backupConfigs.formula || [];
+	} else {
+		(await selections("Formulas", Object.keys(mapperformulasLookup).sort())).forEach((mf: string) => selectedMapperFormulas.push(mapperformulasLookup[mf]));
+	}
 
 	let groupsLookup = readBackupMap("groups_lookup");
 	let selectedGroups: string[] = [];
-	(await selections("groups", Object.keys(groupsLookup).sort())).forEach((group: string) => selectedGroups.push(groupsLookup[group]));
+	if (backupConfigs) {
+		selectedGroups = backupConfigs.group || [];
+	} else {
+		(await selections("groups", Object.keys(groupsLookup).sort())).forEach((group: string) => selectedGroups.push(groupsLookup[group]));
+	}
 
 	logger.info(`Dataservices : ${selectedDataservices.join(", ") || "Nil"}`);
 	logger.info(`Libraries : ${selectedLibraries.join(", ") || "Nil"}`);

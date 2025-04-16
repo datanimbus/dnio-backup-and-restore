@@ -55,23 +55,29 @@ program
     .option("-p, --password <password>", "data.stack password.")
     .option("-a, --app <app name>", "data.stack app name to backup or restore.")
     .option("-b, --backupfile <backup JSON file>", "Custom backup file to use during backup or restore")
+    .option("-c, --backup-config-path <backup config path>", "Custom backup config path")
     .action(() => __awaiter(void 0, void 0, void 0, function* () {
     try {
         (0, lib_misc_1.parseCliParams)(program.opts(), timestamp);
         (0, lib_misc_1.header)(` data.stack Backup and Restore Utility ${version} `);
         let dsConfig = yield (0, lib_cli_1.validateCLIParams)();
         yield (0, manager_api_1.login)(dsConfig);
-        let apps = [];
-        if (!global.selectedApp)
-            apps = yield (0, manager_api_1.getApps)();
-        const selection = yield (0, lib_cli_1.startMenu)();
-        global.logger.info(`Selected mode :: ${selection.mode}`);
-        if (selection.mode == "Backup")
-            yield (0, manager_backup_1.backupManager)(apps);
-        if (selection.mode == "Restore")
-            yield (0, manager_restore_1.restoreManager)(apps);
-        if (selection.mode == "Clear All")
-            yield (0, manager_clearAll_1.clearAllManager)(apps);
+        if (global.backupConfigs) {
+            yield (0, manager_backup_1.backupFromCsvManager)(global.backupConfigs);
+        }
+        else {
+            let apps = [];
+            if (!global.selectedApp)
+                apps = yield (0, manager_api_1.getApps)();
+            const selection = yield (0, lib_cli_1.startMenu)();
+            global.logger.info(`Selected mode :: ${selection.mode}`);
+            if (selection.mode == "Backup")
+                yield (0, manager_backup_1.backupManager)(apps);
+            if (selection.mode == "Restore")
+                yield (0, manager_restore_1.restoreManager)(apps);
+            if (selection.mode == "Clear All")
+                yield (0, manager_clearAll_1.clearAllManager)(apps);
+        }
         // Logout cleanly
         (0, manager_api_1.logout)();
     }
@@ -88,10 +94,15 @@ program.command("backup")
         (0, lib_misc_1.header)(`data.stack Backup and Restore Utility ${version}`);
         let dsConfig = yield (0, lib_cli_1.validateCLIParams)();
         yield (0, manager_api_1.login)(dsConfig);
-        let apps = [];
-        if (!global.selectedApp)
-            apps = yield (0, manager_api_1.getApps)();
-        yield (0, manager_backup_1.backupManager)(apps);
+        if (global.backupConfigs) {
+            yield (0, manager_backup_1.backupFromCsvManager)(global.backupConfigs);
+        }
+        else {
+            let apps = [];
+            if (!global.selectedApp)
+                apps = yield (0, manager_api_1.getApps)();
+            yield (0, manager_backup_1.backupManager)(apps);
+        }
         // Logout cleanly
         (0, manager_api_1.logout)();
     }
