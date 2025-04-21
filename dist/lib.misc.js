@@ -95,6 +95,10 @@ function parseCliParams(options, timestamp) {
             .pipe(csv())
             .on('data', (row) => {
             const { app, type, _id } = row;
+            if (!app) {
+                console.error("`app` is a required field in backup config file. Please refer `./sample-backup-config.csv` file");
+                process.exit(1);
+            }
             if (!global.backupConfigs[app]) {
                 global.backupConfigs[app] = {};
             }
