@@ -8,7 +8,9 @@ declare global {
 	var host: string;
 	var selectedApp: string;
 	var backupFileName: string;
+	var originalBackupFileName: string;
 	var restoreFileName: string;
 	var token: string;
 	var isSuperAdmin: boolean;
+	var backupConfigs: any;
 }

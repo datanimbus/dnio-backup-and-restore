@@ -5,28 +5,33 @@ const lib_db_1 = require("./lib.db");
 let dependencyMatrixOfDataServices = {};
 let dependencyMatrixOfDataPipes = {};
 function updateTheDependencyMatrixOfDataServices(id, newDependencyMatrix) {
-    const data = dependencyMatrixOfDataServices[id];
-    if (data.dataservices && data.dataservices.length == 0)
-        return data;
-    data.dataservices.forEach((ds) => {
-        let childDSDM = dependencyMatrixOfDataServices[ds];
-        // merge connectors
-        childDSDM.connectors.filter((id) => newDependencyMatrix.connectors.indexOf(id) == -1)
-            .forEach((id) => newDependencyMatrix.connectors.push(id));
-        // merge libraries
-        childDSDM.libraries.filter((id) => newDependencyMatrix.libraries.indexOf(id) == -1)
-            .forEach((id) => newDependencyMatrix.libraries.push(id));
-        // merge functions
-        childDSDM.functions.filter((id) => newDependencyMatrix.functions.indexOf(id) == -1)
-            .forEach((id) => newDependencyMatrix.functions.push(id));
-        // merge dataservices
-        let missingDataServices = childDSDM.dataservices.filter((ds) => newDependencyMatrix.dataservices.indexOf(ds) == -1);
-        if (missingDataServices.length > 0) {
-            missingDataServices.forEach((ds) => newDependencyMatrix.dataservices.push(ds));
-            newDependencyMatrix = updateTheDependencyMatrixOfDataServices(ds, newDependencyMatrix);
-        }
-    });
-    return newDependencyMatrix;
+    try {
+        const data = dependencyMatrixOfDataServices[id];
+        if (data && data.dataservices && data.dataservices.length == 0)
+            return data;
+        data.dataservices.forEach((ds) => {
+            let childDSDM = dependencyMatrixOfDataServices[ds];
+            // merge connectors
+            childDSDM.connectors.filter((id) => newDependencyMatrix.connectors.indexOf(id) == -1)
+                .forEach((id) => newDependencyMatrix.connectors.push(id));
+            // merge libraries
+            childDSDM.libraries.filter((id) => newDependencyMatrix.libraries.indexOf(id) == -1)
+                .forEach((id) => newDependencyMatrix.libraries.push(id));
+            // merge functions
+            childDSDM.functions.filter((id) => newDependencyMatrix.functions.indexOf(id) == -1)
+                .forEach((id) => newDependencyMatrix.functions.push(id));
+            // merge dataservices
+            let missingDataServices = childDSDM.dataservices.filter((ds) => newDependencyMatrix.dataservices.indexOf(ds) == -1);
+            if (missingDataServices.length > 0) {
+                missingDataServices.forEach((ds) => newDependencyMatrix.dataservices.push(ds));
+                newDependencyMatrix = updateTheDependencyMatrixOfDataServices(ds, newDependencyMatrix);
+            }
+        });
+        return newDependencyMatrix;
+    }
+    catch (e) {
+        console.log(e);
+    }
 }
 function updateTheDependencyMatrixOfDataPipes(id, newDependencyMatrix) {
     const data = dependencyMatrixOfDataPipes[id];

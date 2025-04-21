@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.backupManager = void 0;
+exports.backupManager = exports.backupFromCsvManager = void 0;
 const lib_cli_1 = require("./lib.cli");
 const lib_misc_1 = require("./lib.misc");
 const manager_api_1 = require("./manager.api");
@@ -32,6 +32,36 @@ function getURLParamsForData(count) {
     searchParams.append("sort", "_id");
     return searchParams;
 }
+function backupFromCsvManager(configs) {
+    return __awaiter(this, void 0, void 0, function* () {
+        (0, lib_misc_1.header)("Backup configurations");
+        const apps = Object.keys(configs);
+        for (let i = 0; i < apps.length; i++) {
+            const app = apps[i];
+            selectedApp = app;
+            global.selectedApp = app;
+            global.backupFileName = `${app}-${global.originalBackupFileName}`;
+            (0, lib_db_1.backupInit)();
+            (0, lib_misc_1.printInfo)(`Selected app: ${global.selectedApp}`);
+            (0, lib_misc_1.printInfo)("Scanning the configurations within the app...");
+            yield fetchLibraries();
+            // await fetchFunctions();
+            yield fetchConnectors();
+            yield fetchDataFormats();
+            yield fetchAgents();
+            yield fetchPlugins();
+            yield fetchMyNodes();
+            yield fetchMapperFormulas();
+            yield fetchGroups();
+            yield fetchDataServices();
+            yield fetchDataPipes();
+            (0, lib_dependencyMatrix_1.recalculateDependencyMatrix)();
+            yield customiseBackup(configs[app]);
+        }
+        (0, lib_misc_1.header)("Backup complete!");
+    });
+}
+exports.backupFromCsvManager = backupFromCsvManager;
 function backupManager(apps) {
     return __awaiter(this, void 0, void 0, function* () {
         (0, lib_misc_1.header)("Backup configurations");
@@ -277,44 +307,96 @@ function fetchGroups() {
         }
     });
 }
-function customiseBackup() {
+function customiseBackup(backupConfigs) {
     return __awaiter(this, void 0, void 0, function* () {
-        let customisationRequired = yield (0, lib_cli_1.customise)();
-        if (!customisationRequired) {
-            (0, lib_misc_1.printInfo)("No backup customizations done.");
-            return;
+        if (!backupConfigs) {
+            let customisationRequired = yield (0, lib_cli_1.customise)();
+            if (!customisationRequired) {
+                (0, lib_misc_1.printInfo)("No backup customizations done.");
+                return;
+            }
+            (0, lib_misc_1.header)("Customizing the backup");
         }
-        (0, lib_misc_1.header)("Customizing the backup");
         let dataservicesLookup = (0, lib_db_1.readBackupMap)("dataservices_lookup");
         let selectedDataservices = [];
-        (yield (0, lib_cli_1.selections)("Data Services", Object.keys(dataservicesLookup).sort())).forEach((ds) => selectedDataservices.push(dataservicesLookup[ds]));
+        if (backupConfigs) {
+            selectedDataservices = backupConfigs.service || [];
+        }
+        else {
+            (yield (0, lib_cli_1.selections)("Data Services", Object.keys(dataservicesLookup).sort())).forEach((ds) => selectedDataservices.push(dataservicesLookup[ds]));
+        }
         let datapipesLookup = (0, lib_db_1.readBackupMap)("datapipes_lookup");
         let selectedDataPipes = [];
-        (yield (0, lib_cli_1.selections)("Data Pipes", Object.keys(datapipesLookup).sort())).forEach((datapipe) => selectedDataPipes.push(datapipesLookup[datapipe]));
+        if (backupConfigs) {
+            selectedDataPipes = backupConfigs.pipe || [];
+        }
+        else {
+            (yield (0, lib_cli_1.selections)("Data Pipes", Object.keys(datapipesLookup).sort())).forEach((datapipe) => selectedDataPipes.push(datapipesLookup[datapipe]));
+        }
         let librariesLookup = (0, lib_db_1.readBackupMap)("libraries_lookup");
         let selectedLibraries = [];
-        (yield (0, lib_cli_1.selections)("Libraries", Object.keys(librariesLookup).sort())).forEach((lib) => selectedLibraries.push(librariesLookup[lib]));
+        if (backupConfigs) {
+            selectedLibraries = backupConfigs.library || [];
+        }
+        else {
+            (yield (0, lib_cli_1.selections)("Libraries", Object.keys(librariesLookup).sort())).forEach((lib) => selectedLibraries.push(librariesLookup[lib]));
+        }
         let functionsLookup = (0, lib_db_1.readBackupMap)("functions_lookup");
         let selectedFunctions = [];
-        (yield (0, lib_cli_1.selections)("Functions", Object.keys(functionsLookup).sort())).forEach((fn) => selectedFunctions.push(functionsLookup[fn]));
+        if (backupConfigs) {
+            selectedFunctions = backupConfigs.function || [];
+        }
+        else {
+            (yield (0, lib_cli_1.selections)("Functions", Object.keys(functionsLookup).sort())).forEach((fn) => selectedFunctions.push(functionsLookup[fn]));
+        }
         let connectorsLookup = (0, lib_db_1.readBackupMap)("connectors_lookup");
         let selectedConnectors = [];
-        (yield (0, lib_cli_1.selections)("Connectors", Object.keys(connectorsLookup).sort())).forEach((connector) => selectedConnectors.push(connectorsLookup[connector]));
+        if (backupConfigs) {
+            selectedConnectors = backupConfigs.connector || [];
+        }
+        else {
+            (yield (0, lib_cli_1.selections)("Connectors", Object.keys(connectorsLookup).sort())).forEach((connector) => selectedConnectors.push(connectorsLookup[connector]));
+        }
         let dataformatsLookup = (0, lib_db_1.readBackupMap)("dataformats_lookup");
         let selectedDataFormats = [];
-        (yield (0, lib_cli_1.selections)("Data Formats", Object.keys(dataformatsLookup).sort())).forEach((dataformat) => selectedDataFormats.push(dataformatsLookup[dataformat]));
+        if (backupConfigs) {
+            selectedDataFormats = backupConfigs.format || [];
+        }
+        else {
+            (yield (0, lib_cli_1.selections)("Data Formats", Object.keys(dataformatsLookup).sort())).forEach((dataformat) => selectedDataFormats.push(dataformatsLookup[dataformat]));
+        }
         let agentsLookup = (0, lib_db_1.readBackupMap)("agents_lookup");
         let selectedAgents = [];
-        (yield (0, lib_cli_1.selections)("Agents", Object.keys(agentsLookup).sort())).forEach((agent) => selectedAgents.push(agentsLookup[agent]));
+        if (backupConfigs) {
+            selectedAgents = backupConfigs.agent || [];
+        }
+        else {
+            (yield (0, lib_cli_1.selections)("Agents", Object.keys(agentsLookup).sort())).forEach((agent) => selectedAgents.push(agentsLookup[agent]));
+        }
         let pluginsLookup = (0, lib_db_1.readBackupMap)("plugins_lookup");
         let selectedPlugins = [];
-        (yield (0, lib_cli_1.selections)("Plugins", Object.keys(pluginsLookup).sort())).forEach((plugin) => selectedPlugins.push(pluginsLookup[plugin]));
+        if (backupConfigs) {
+            selectedPlugins = backupConfigs.plugin || [];
+        }
+        else {
+            (yield (0, lib_cli_1.selections)("Plugins", Object.keys(pluginsLookup).sort())).forEach((plugin) => selectedPlugins.push(pluginsLookup[plugin]));
+        }
         let mapperformulasLookup = (0, lib_db_1.readBackupMap)("mapperformulas_lookup");
         let selectedMapperFormulas = [];
-        (yield (0, lib_cli_1.selections)("Formulas", Object.keys(mapperformulasLookup).sort())).forEach((mf) => selectedMapperFormulas.push(mapperformulasLookup[mf]));
+        if (backupConfigs) {
+            selectedMapperFormulas = backupConfigs.formula || [];
+        }
+        else {
+            (yield (0, lib_cli_1.selections)("Formulas", Object.keys(mapperformulasLookup).sort())).forEach((mf) => selectedMapperFormulas.push(mapperformulasLookup[mf]));
+        }
         let groupsLookup = (0, lib_db_1.readBackupMap)("groups_lookup");
         let selectedGroups = [];
-        (yield (0, lib_cli_1.selections)("groups", Object.keys(groupsLookup).sort())).forEach((group) => selectedGroups.push(groupsLookup[group]));
+        if (backupConfigs) {
+            selectedGroups = backupConfigs.group || [];
+        }
+        else {
+            (yield (0, lib_cli_1.selections)("groups", Object.keys(groupsLookup).sort())).forEach((group) => selectedGroups.push(groupsLookup[group]));
+        }
         logger.info(`Dataservices : ${selectedDataservices.join(", ") || "Nil"}`);
         logger.info(`Libraries : ${selectedLibraries.join(", ") || "Nil"}`);
         logger.info(`Functions : ${selectedFunctions.join(", ") || "Nil"}`);

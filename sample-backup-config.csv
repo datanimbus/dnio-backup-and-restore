@@ -1,0 +1,11 @@
+_id,type,app
+SRVC12731,service,AppName
+FLOW5872,pipe,AppName
+LIB1001,library,AppName
+FUN1001,function,AppName
+CON3775,connector,AppName
+DF4229,format,AppName
+AGENT2600,agent,AppName
+PLU1001,plugin,AppName
+FX1469,formula,AppName
+GRP17537,group,AppName

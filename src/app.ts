@@ -35,7 +35,7 @@ global.logger = logger;
 import { header, parseCliParams } from "./lib.misc";
 import { startMenu, validateCLIParams } from "./lib.cli";
 import { getApps, login, logout } from "./manager.api";
-import { backupManager } from "./manager.backup";
+import { backupManager, backupFromCsvManager } from "./manager.backup";
 import { restoreManager } from "./manager.restore";
 import { clearAllManager } from "./manager.clearAll";
 
@@ -51,19 +51,24 @@ program
 	.option("-p, --password <password>", "data.stack password.")
 	.option("-a, --app <app name>", "data.stack app name to backup or restore.")
 	.option("-b, --backupfile <backup JSON file>", "Custom backup file to use during backup or restore")
+	.option("-c, --backup-config-path <backup config path>", "Custom backup config path")
 	.action(async () => {
 		try {
 			parseCliParams(program.opts(), timestamp);
 			header(` data.stack Backup and Restore Utility ${version} `);
 			let dsConfig = await validateCLIParams();
 			await login(dsConfig);
-			let apps = [];
-			if (!global.selectedApp) apps = await getApps();
-			const selection = await startMenu();
-			global.logger.info(`Selected mode :: ${selection.mode}`);
-			if (selection.mode == "Backup") await backupManager(apps);
-			if (selection.mode == "Restore") await restoreManager(apps);
-			if (selection.mode == "Clear All") await clearAllManager(apps);
+			if (global.backupConfigs) {
+				await backupFromCsvManager(global.backupConfigs);
+			} else {
+				let apps = [];
+				if (!global.selectedApp) apps = await getApps();
+				const selection = await startMenu();
+				global.logger.info(`Selected mode :: ${selection.mode}`);
+				if (selection.mode == "Backup") await backupManager(apps);
+				if (selection.mode == "Restore") await restoreManager(apps);
+				if (selection.mode == "Clear All") await clearAllManager(apps);
+			}
 			// Logout cleanly
 			logout();
 		} catch (e: any) {
@@ -80,9 +85,13 @@ program.command("backup")
 			header(`data.stack Backup and Restore Utility ${version}`);
 			let dsConfig = await validateCLIParams();
 			await login(dsConfig);
-			let apps = [];
-			if (!global.selectedApp) apps = await getApps();
-			await backupManager(apps);
+			if (global.backupConfigs) {
+				await backupFromCsvManager(global.backupConfigs);
+			} else {
+				let apps = [];
+				if (!global.selectedApp) apps = await getApps();
+				await backupManager(apps);
+			}
 			// Logout cleanly
 			logout();
 		} catch (e: any) {

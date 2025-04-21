@@ -1,3 +1,7 @@
+import { join } from "path";
+import { createReadStream } from "fs";
+const csv = require('csv-parser');
+
 let logger = global.logger;
 
 export function header(_s: string) {
@@ -77,6 +81,30 @@ export function parseCliParams(options: any, timestamp: string) {
 	if (process.env.DS_BR_SINGLELOGFILE) {
 		global.backupFileName = "backup.json";
 		global.restoreFileName = "restore.json";
+	}
+
+	global.originalBackupFileName = global.backupFileName;
+
+	if (options.backupConfigPath) {
+		const filePath = join(process.cwd(), options.backupConfigPath);
+		global.backupConfigs = {};
+		createReadStream(filePath)
+			.pipe(csv())
+			.on('data', (row: any) => {
+				const { app, type, _id } = row;
+				if (!app) {
+					console.error("`app` is a required field in backup config file. Please refer `./sample-backup-config.csv` file");
+					process.exit(1);
+				}
+				if (!global.backupConfigs[app]) {
+					global.backupConfigs[app] = {};
+				}
+				if (!global.backupConfigs[app][type]) {
+					global.backupConfigs[app][type] = [];
+				}
+				global.backupConfigs[app][type].push(_id);
+			})
+			.on('end', () => {});
 	}
 
 	if (options.host) process.env.DS_BR_HOST = options.host;
