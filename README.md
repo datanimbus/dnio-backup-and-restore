@@ -13,6 +13,8 @@ Options:
   -p, --password <password>                      data.stack password.
   -a, --app <app name>                           data.stack app name.
   -b, --backupfile <backup JSON file>            Custom backup file to use during backup or restore
+  -fb, --full-backup                             Full backup without customizations
+                                                 ( skip the customizations/confirmation for automation )
   -c, --backup-config-path <backup config path>  Custom backup config path
   --help                                         display help for command
 
@@ -41,6 +43,7 @@ Download and run the executable from the [Releases](https://github.com/datanimbu
 * You can use `-b` during backup and restore.
   * While backing up the backup file specified will be used to write the backup data.
   * While restoring the backup configuration would be read from the file specified.
+* `-fb, --full-backup` is an optional flag only for backup operation. 
 ## Info
 
 * Backup customization is only supported in the interactive mode. Run `dnio-backup-and-restore` without any *commands* to enter into interactove mode.
@@ -57,6 +60,7 @@ Download and run the executable from the [Releases](https://github.com/datanimbu
 | DS_BR_PASSWORD | data.stack password. |
 | DS_BR_APP | data.stack app. |
 | DS_BR_SINGLELOGFILE | `true/false`. If enabled, then backup, restore, and logs will use `backup.json`, `restore.json` and `out.log` as the files to write to.|
+| DS_BR_FULL_BACKUP | `true/false`. If enabled, then backup operation will perform full backup without any prompt for customizations. This is a `backup only` option.|
 | LOGLEVEL | Logging level to set. |
 | NODE_TLS_REJECT_UNAUTHORIZED | `0/1`. Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.  |
 
@@ -86,6 +90,15 @@ dnio-backup-and-restore-linux \
   -u "mysuperadmin@datanimbus.com" \
   -p "aComplicatedPassword" \
   --backup-config-path ./backup-config.csv # refer ./sample-backup-config.csv
+
+# OPTION 5 - Full Backup
+dnio-backup-and-restore-linux backup \
+  -b backup.json \
+  -h https://datanimbus.myapp.io \
+  -u "mysuperadmin@datanimbus.com" \
+  -p "aComplicatedPassword" \
+  -a DestApp
+  -fb
 
 # RESTORE
 dnio-backup-and-restore-linux restore \

@@ -77,6 +77,7 @@ function padCount(_d) {
 }
 function parseCliParams(options, timestamp) {
     // ENV VAR > CLI PARAM > RUNTIME
+    global.fullBackup = process.env.DS_BR_FULL_BACKUP == 'true' ? true : false;
     global.backupFileName = `backup-${timestamp}.json`;
     if (options.backupfile)
         global.backupFileName = options.backupfile;
@@ -115,5 +116,7 @@ function parseCliParams(options, timestamp) {
         process.env.DS_BR_USERNAME = options.username;
     if (options.password)
         process.env.DS_BR_PASSWORD = options.password;
+    if (options.fullBackup)
+        global.fullBackup = options.fullBackup;
 }
 exports.parseCliParams = parseCliParams;
