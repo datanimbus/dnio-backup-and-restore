@@ -26,7 +26,7 @@ function getURLParamsForData(count: number) {
 }
 
 export async function backupFromCsvManager(configs: any) {
-	header("Backup configurations");
+	header("Backup configurations - from CSV");
 
 	const apps = Object.keys(configs);
 	for (let i = 0; i < apps.length; i++) {
@@ -281,7 +281,10 @@ async function fetchGroups() {
 }
 
 async function customiseBackup(backupConfigs?: any) {
-
+	if (global.fullBackup) {
+		printInfo("Full backup is enabled. No customizations will be done.");
+		return;
+	}
 	if (!backupConfigs) {
 		let customisationRequired = await customise();
 		if (!customisationRequired) {

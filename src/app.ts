@@ -51,6 +51,7 @@ program
 	.option("-p, --password <password>", "data.stack password.")
 	.option("-a, --app <app name>", "data.stack app name to backup or restore.")
 	.option("-b, --backupfile <backup JSON file>", "Custom backup file to use during backup or restore")
+	.option("-fb, --full-backup", "Full backup without customizations")
 	.option("-c, --backup-config-path <backup config path>", "Custom backup config path")
 	.action(async () => {
 		try {

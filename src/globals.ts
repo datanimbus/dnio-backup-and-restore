@@ -13,4 +13,5 @@ declare global {
 	var token: string;
 	var isSuperAdmin: boolean;
 	var backupConfigs: any;
+	var fullBackup: boolean;
 }

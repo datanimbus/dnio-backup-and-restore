@@ -34,7 +34,7 @@ function getURLParamsForData(count) {
 }
 function backupFromCsvManager(configs) {
     return __awaiter(this, void 0, void 0, function* () {
-        (0, lib_misc_1.header)("Backup configurations");
+        (0, lib_misc_1.header)("Backup configurations - from CSV");
         const apps = Object.keys(configs);
         for (let i = 0; i < apps.length; i++) {
             const app = apps[i];
@@ -309,6 +309,10 @@ function fetchGroups() {
 }
 function customiseBackup(backupConfigs) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (global.fullBackup) {
+            (0, lib_misc_1.printInfo)("Full backup is enabled. No customizations will be done.");
+            return;
+        }
         if (!backupConfigs) {
             let customisationRequired = yield (0, lib_cli_1.customise)();
             if (!customisationRequired) {
