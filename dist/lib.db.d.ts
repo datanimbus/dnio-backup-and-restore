@@ -4,6 +4,7 @@ export declare function save(key: string, data: any[]): void;
 export declare function backupMapper(token: string, key: string, value: string): void;
 export declare function backupDependencyMatrixOfDataService(data: any): void;
 export declare function backupDependencyMatrixOfDataPipe(data: any): void;
+export declare function backupDependencyMatrixOfDeploymentGroups(data: any): void;
 export declare function restoreMapper(token: string, key: string, value: string): void;
 export declare function read(key: string): any;
 export declare function readBackupMap(token: string): any;

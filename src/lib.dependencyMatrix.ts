@@ -1,7 +1,8 @@
-import { backupDependencyMatrixOfDataPipe, backupDependencyMatrixOfDataService, readDependencyMatrixOfDataPipes, readDependencyMatrixOfDataServices } from "./lib.db";
+import { backupDependencyMatrixOfDataPipe, backupDependencyMatrixOfDataService, backupDependencyMatrixOfDeploymentGroups, readDependencyMatrixOfDataPipes, readDependencyMatrixOfDataServices } from "./lib.db";
 
 let dependencyMatrixOfDataServices: any = {};
 let dependencyMatrixOfDataPipes: any = {};
+let dependencyMatrixOfDeploymentGroups: any = {};
 
 function updateTheDependencyMatrixOfDataServices(id: string, newDependencyMatrix: any) {
 	try {
@@ -28,7 +29,7 @@ function updateTheDependencyMatrixOfDataServices(id: string, newDependencyMatrix
 		});
 		return newDependencyMatrix;
 	} catch (e) {
-		console.log(e)
+		console.log(e);
 	}
 }
 
@@ -139,4 +140,5 @@ export function recalculateDependencyMatrix() {
 	});
 	backupDependencyMatrixOfDataService(dependencyMatrixOfDataServices);
 	backupDependencyMatrixOfDataPipe(dependencyMatrixOfDataPipes);
+	backupDependencyMatrixOfDeploymentGroups(dependencyMatrixOfDeploymentGroups);
 }

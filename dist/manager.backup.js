@@ -22,6 +22,7 @@ let selectedApp = "";
 function getURLParamsForCount() {
     let searchParams = new URLSearchParams();
     searchParams.append("filter", JSON.stringify({ app: selectedApp }));
+    searchParams.append("countOnly", "true");
     return searchParams;
 }
 function getURLParamsForData(count) {
@@ -55,6 +56,7 @@ function backupFromCsvManager(configs) {
             yield fetchGroups();
             yield fetchDataServices();
             yield fetchDataPipes();
+            yield fetchDeployments();
             (0, lib_dependencyMatrix_1.recalculateDependencyMatrix)();
             yield customiseBackup(configs[app]);
         }
@@ -83,6 +85,7 @@ function backupManager(apps) {
         yield fetchGroups();
         yield fetchDataServices();
         yield fetchDataPipes();
+        yield fetchDeployments();
         (0, lib_dependencyMatrix_1.recalculateDependencyMatrix)();
         yield customiseBackup();
         (0, lib_misc_1.header)("Backup complete!");
@@ -301,6 +304,25 @@ function fetchGroups() {
                 (0, lib_db_1.backupMapper)("groups_lookup", group.name, group._id);
             });
             (0, lib_misc_1.printDone)("Groups", groups.length);
+        }
+        catch (e) {
+            logger.error(e.message);
+        }
+    });
+}
+function fetchDeployments() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const URL_DATA = `/api/a/bm/${selectedApp}/deployment/group`;
+            const URL_COUNT = `/api/a/bm/${selectedApp}/deployment/group`;
+            const deploymentsCount = yield (0, manager_api_1.get)(URL_COUNT, getURLParamsForCount());
+            const deployments = yield (0, manager_api_1.get)(URL_DATA, getURLParamsForData(deploymentsCount));
+            (0, lib_db_1.save)("deploymentGroups", deployments);
+            deployments.forEach((deployment) => {
+                (0, lib_db_1.backupMapper)("deploymentGroups", deployment._id, deployment.name);
+                (0, lib_db_1.backupMapper)("deploymentGroups_lookup", deployment.name, deployment._id);
+            });
+            (0, lib_misc_1.printDone)("Deployment Groups", deploymentsCount);
         }
         catch (e) {
             logger.error(e.message);

@@ -13,6 +13,7 @@ let selectedApp = "";
 function getURLParamsForCount() {
 	let searchParams = new URLSearchParams();
 	searchParams.append("filter", JSON.stringify({ app: selectedApp }));
+	searchParams.append("countOnly", "true");
 	return searchParams;
 }
 
@@ -49,6 +50,7 @@ export async function backupFromCsvManager(configs: any) {
 		await fetchGroups();
 		await fetchDataServices();
 		await fetchDataPipes();
+		await fetchDeployments();
 		recalculateDependencyMatrix();
 		await customiseBackup(configs[app]);
 	}
@@ -76,6 +78,7 @@ export async function backupManager(apps: any) {
 	await fetchGroups();
 	await fetchDataServices();
 	await fetchDataPipes();
+	await fetchDeployments();
 	recalculateDependencyMatrix();
 	await customiseBackup();
 	header("Backup complete!");
@@ -275,6 +278,23 @@ async function fetchGroups() {
 			backupMapper("groups_lookup", group.name, group._id);
 		});
 		printDone("Groups", groups.length);
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
+async function fetchDeployments() {
+	try {
+		const URL_DATA = `/api/a/bm/${selectedApp}/deployment/group`;
+		const URL_COUNT = `/api/a/bm/${selectedApp}/deployment/group`;
+		const deploymentsCount = await get(URL_COUNT, getURLParamsForCount());
+		const deployments = await get(URL_DATA, getURLParamsForData(deploymentsCount));
+		save("deploymentGroups", deployments);
+		deployments.forEach((deployment: any) => {
+			backupMapper("deploymentGroups", deployment._id, deployment.name);
+			backupMapper("deploymentGroups_lookup", deployment.name, deployment._id);
+		});
+		printDone("Deployment Groups", deploymentsCount);
 	} catch (e: any) {
 		logger.error(e.message);
 	}
