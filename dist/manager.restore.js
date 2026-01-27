@@ -40,6 +40,7 @@ function restoreManager(apps) {
         yield restoreMapperFormulas();
         yield restoreDataPipes();
         yield restoreGroups();
+        yield restoreDeployments();
         (0, lib_misc_1.header)("Restore complete!");
     });
 }
@@ -189,7 +190,7 @@ function restoreConnectors() {
                 return;
             (0, lib_misc_1.header)("Connectors");
             (0, lib_misc_1.printInfo)(`Connectors to restore - ${connectors.length}`);
-            let BASE_URL = `/api/a/rbac/${selectedApp}/connector`;
+            let BASE_URL = `/api/a/bm/${selectedApp}/connector`;
             let searchParams = new URLSearchParams();
             searchParams.append("filter", JSON.stringify({ app: selectedApp }));
             searchParams.append("select", "name, options");
@@ -449,6 +450,7 @@ function restoreDataPipes() {
                 delete datapipe.__v;
                 delete datapipe.version;
                 delete datapipe.lastInvoked;
+                delete datapipe.namespace;
                 datapipe.status = "Stopped";
                 datapipe = (0, lib_parser_pipe_1.parseDataPipeAndFixAppName)(datapipe, selectedApp);
                 if (newDataPipes.indexOf(datapipe._id) != -1)
@@ -492,6 +494,41 @@ function restoreGroups() {
                 else
                     newData = yield insert("Group", BASE_URL, selectedApp, group);
                 (0, lib_db_1.restoreMapper)("group", group._id, newData._id);
+            }), Promise.resolve());
+        }
+        catch (e) {
+            logger.error(e.message);
+        }
+    });
+}
+function restoreDeployments() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let deployments = (0, lib_db_1.read)("deploymentGroups");
+            if (deployments.length < 1)
+                return;
+            (0, lib_misc_1.header)("Deployment");
+            (0, lib_misc_1.printInfo)(`Deployments to restore - ${deployments.length}`);
+            let BASE_URL = `/api/a/bm/${selectedApp}/deployment/group`;
+            let dataPipesIDMap = (0, lib_db_1.readRestoreMap)("datapipes");
+            yield deployments.reduce((prev, deployment) => __awaiter(this, void 0, void 0, function* () {
+                yield prev;
+                delete deployment.namespace;
+                delete deployment.yaml;
+                delete deployment.draftVersion;
+                deployment.app = selectedApp;
+                deployment.deployments.forEach((item) => {
+                    if (dataPipesIDMap[item._id]) {
+                        item._id = dataPipesIDMap[item._id];
+                    }
+                });
+                let existingID = yield configExists(BASE_URL, deployment.name, selectedApp);
+                let newData = null;
+                if (existingID)
+                    newData = yield update("Deployment Group", BASE_URL, selectedApp, deployment, existingID);
+                else
+                    newData = yield insert("Deployment", BASE_URL, selectedApp, deployment);
+                (0, lib_db_1.restoreMapper)("deploymentGroups", deployment._id, newData._id);
             }), Promise.resolve());
         }
         catch (e) {

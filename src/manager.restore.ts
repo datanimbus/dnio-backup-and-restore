@@ -33,6 +33,7 @@ export async function restoreManager(apps: any) {
 	await restoreMapperFormulas();
 	await restoreDataPipes();
 	await restoreGroups();
+	await restoreDeployments();
 	header("Restore complete!");
 }
 
@@ -165,7 +166,7 @@ async function restoreConnectors() {
 		if (connectors.length < 1) return;
 		header("Connectors");
 		printInfo(`Connectors to restore - ${connectors.length}`);
-		let BASE_URL = `/api/a/rbac/${selectedApp}/connector`;
+		let BASE_URL = `/api/a/bm/${selectedApp}/connector`;
 		let searchParams = new URLSearchParams();
 		searchParams.append("filter", JSON.stringify({ app: selectedApp }));
 		searchParams.append("select", "name, options");
@@ -396,6 +397,7 @@ async function restoreDataPipes() {
 			delete datapipe.__v;
 			delete datapipe.version;
 			delete datapipe.lastInvoked;
+			delete datapipe.namespace;
 			datapipe.status = "Stopped";
 			datapipe = parseDataPipeAndFixAppName(datapipe, selectedApp);
 			if (newDataPipes.indexOf(datapipe._id) != -1) datapipe.status = "Draft";
@@ -433,6 +435,37 @@ async function restoreGroups() {
 			if (existingID) newData = await update("Group", BASE_URL, selectedApp, group, existingID);
 			else newData = await insert("Group", BASE_URL, selectedApp, group);
 			restoreMapper("group", group._id, newData._id);
+		}, Promise.resolve());
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
+async function restoreDeployments() {
+	try {
+		let deployments = read("deploymentGroups");
+		if (deployments.length < 1) return;
+		header("Deployment");
+		printInfo(`Deployments to restore - ${deployments.length}`);
+		let BASE_URL = `/api/a/bm/${selectedApp}/deployment/group`;
+		let dataPipesIDMap = readRestoreMap("datapipes");
+		await deployments.reduce(async (prev: any, deployment: any) => {
+			await prev;
+			delete deployment.namespace;
+			delete deployment.yaml;
+			delete deployment.draftVersion;
+			deployment.app = selectedApp;
+			deployment.deployments.forEach((item: any) => {
+				if (dataPipesIDMap[item._id]) {
+					item._id = dataPipesIDMap[item._id];
+				}
+			});
+
+			let existingID = await configExists(BASE_URL, deployment.name, selectedApp);
+			let newData = null;
+			if (existingID) newData = await update("Deployment Group", BASE_URL, selectedApp, deployment, existingID);
+			else newData = await insert("Deployment", BASE_URL, selectedApp, deployment);
+			restoreMapper("deploymentGroups", deployment._id, newData._id);
 		}, Promise.resolve());
 	} catch (e: any) {
 		logger.error(e.message);
