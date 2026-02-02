@@ -110,6 +110,69 @@ async function update(type: string, baseURL: string, selectedApp: string, backed
 	}
 }
 
+async function deploy(type: string, baseURL: string, selectedApp: string, backedUpData: any, existinID: string): Promise<any> {
+	try {
+		let name = backedUpData.name;
+		if (!name) {
+			name = backedUpData.label;
+		}
+		logger.info(`${selectedApp} : Deploy ${type} : ${name}`);
+		let data = JSON.parse(JSON.stringify(backedUpData));
+		data.app = selectedApp;
+		data._id = existinID;
+		delete data.status;
+		let updateURL = `${baseURL}/utils/${existinID}/deploy`;
+		let newData = await put(updateURL, data);
+		printInfo(`${type} deployed : ${name}`);
+		logger.info(JSON.stringify(newData));
+		return newData;
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
+async function publish(type: string, baseURL: string, selectedApp: string, backedUpData: any, existinID: string): Promise<any> {
+	try {
+		let name = backedUpData.name;
+		if (!name) {
+			name = backedUpData.label;
+		}
+		logger.info(`${selectedApp} : Publish ${type} : ${name}`);
+		let data = JSON.parse(JSON.stringify(backedUpData));
+		data.app = selectedApp;
+		data._id = existinID;
+		delete data.status;
+		let updateURL = `${baseURL}/utils/${existinID}/publish`;
+		let newData = await put(updateURL, data);
+		printInfo(`${type} published : ${name}`);
+		logger.info(JSON.stringify(newData));
+		return newData;
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
+async function sync(type: string, baseURL: string, selectedApp: string, backedUpData: any, existinID: string): Promise<any> {
+	try {
+		let name = backedUpData.name;
+		if (!name) {
+			name = backedUpData.label;
+		}
+		logger.info(`${selectedApp} : Sync ${type} : ${name}`);
+		let data = JSON.parse(JSON.stringify(backedUpData));
+		data.app = selectedApp;
+		data._id = existinID;
+		delete data.status;
+		let updateURL = `${baseURL}/utils/${existinID}/sync`;
+		let newData = await put(updateURL, data);
+		printInfo(`${type} synced : ${name}`);
+		logger.info(JSON.stringify(newData));
+		return newData;
+	} catch (e: any) {
+		logger.error(e.message);
+	}
+}
+
 // App level restores
 async function restoreLibrary() {
 	try {
@@ -237,7 +300,8 @@ async function restoreDataServices() {
 			await prev;
 			dataservice.status = "Undeployed";
 			if (newDataServices.indexOf(dataservice._id) != -1) dataservice.status = "Draft";
-			return await update("Dataservice", BASE_URL, selectedApp, dataservice, dataserviceMap[dataservice._id]);
+			await update("Dataservice", BASE_URL, selectedApp, dataservice, dataserviceMap[dataservice._id]);
+			return await deploy("Dataservice", BASE_URL, selectedApp, dataservice, dataserviceMap[dataservice._id]);
 		}, Promise.resolve());
 	} catch (e: any) {
 		logger.error(e.message);
@@ -401,7 +465,8 @@ async function restoreDataPipes() {
 			datapipe.status = "Stopped";
 			datapipe = parseDataPipeAndFixAppName(datapipe, selectedApp);
 			if (newDataPipes.indexOf(datapipe._id) != -1) datapipe.status = "Draft";
-			return await update("Data pipe", BASE_URL, selectedApp, datapipe, datapipeMap[datapipe._id]);
+			await update("Data pipe", BASE_URL, selectedApp, datapipe, datapipeMap[datapipe._id]);
+			return await publish("Data pipe", BASE_URL, selectedApp, datapipe, datapipeMap[datapipe._id]);
 		}, Promise.resolve());
 	} catch (e: any) {
 		logger.error(e.message);
@@ -463,9 +528,10 @@ async function restoreDeployments() {
 
 			let existingID = await configExists(BASE_URL, deployment.name, selectedApp);
 			let newData = null;
-			if (existingID) newData = await update("Deployment Group", BASE_URL, selectedApp, deployment, existingID);
+			if (existingID) newData = await update("Deployment", BASE_URL, selectedApp, deployment, existingID);
 			else newData = await insert("Deployment", BASE_URL, selectedApp, deployment);
 			restoreMapper("deployments", deployment._id, newData._id);
+			return await sync("Deployment", BASE_URL, selectedApp, deployment, newData._id);
 		}, Promise.resolve());
 	} catch (e: any) {
 		logger.error(e.message);

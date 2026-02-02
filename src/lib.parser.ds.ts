@@ -161,7 +161,7 @@ export function parseAndFixDataServices(dataservices: any[]): any[] {
 		delete dataservice.status;
 
 		logger.info(`${dataservice.name} : Find and repair libraries`);
-		dataservice.definition = repairRelationWithLibrary(dataservice.definition, dependencyMatrix[dataservice._id].libraries, libraryMap);
+		dataservice.definition = repairRelationWithLibrary(dataservice.definition, dependencyMatrix[dataservice._id].libraries || [], libraryMap);
 
 		logger.info(`${dataservice.name} : Find and repair connectors`);
 		dataservice = repairConnectors(dataservice, connectorMap);
@@ -173,7 +173,7 @@ export function parseAndFixDataServices(dataservices: any[]): any[] {
 		dataservice.definition = repairRelationships([], dataservice.definition);
 
 		logger.info(`${dataservice.name} : Find and repair dataservice relationship IDs`);
-		dataservice.definition = repairRelationshipIDs(dataservice.definition, dependencyMatrix[dataservice._id].dataservices, dataserviceMap);
+		dataservice.definition = repairRelationshipIDs(dataservice.definition, dependencyMatrix[dataservice._id].dataservices || [], dataserviceMap);
 
 		if (dataservice.relatedSchemas) {
 			if (dataservice.relatedSchemas.incoming) dataservice.relatedSchemas.incoming = [];

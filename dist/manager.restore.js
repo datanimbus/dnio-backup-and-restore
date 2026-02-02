@@ -128,6 +128,75 @@ function update(type, baseURL, selectedApp, backedUpData, existinID) {
         }
     });
 }
+function deploy(type, baseURL, selectedApp, backedUpData, existinID) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let name = backedUpData.name;
+            if (!name) {
+                name = backedUpData.label;
+            }
+            logger.info(`${selectedApp} : Deploy ${type} : ${name}`);
+            let data = JSON.parse(JSON.stringify(backedUpData));
+            data.app = selectedApp;
+            data._id = existinID;
+            delete data.status;
+            let updateURL = `${baseURL}/utils/${existinID}/deploy`;
+            let newData = yield (0, manager_api_1.put)(updateURL, data);
+            (0, lib_misc_1.printInfo)(`${type} deployed : ${name}`);
+            logger.info(JSON.stringify(newData));
+            return newData;
+        }
+        catch (e) {
+            logger.error(e.message);
+        }
+    });
+}
+function publish(type, baseURL, selectedApp, backedUpData, existinID) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let name = backedUpData.name;
+            if (!name) {
+                name = backedUpData.label;
+            }
+            logger.info(`${selectedApp} : Publish ${type} : ${name}`);
+            let data = JSON.parse(JSON.stringify(backedUpData));
+            data.app = selectedApp;
+            data._id = existinID;
+            delete data.status;
+            let updateURL = `${baseURL}/utils/${existinID}/publish`;
+            let newData = yield (0, manager_api_1.put)(updateURL, data);
+            (0, lib_misc_1.printInfo)(`${type} published : ${name}`);
+            logger.info(JSON.stringify(newData));
+            return newData;
+        }
+        catch (e) {
+            logger.error(e.message);
+        }
+    });
+}
+function sync(type, baseURL, selectedApp, backedUpData, existinID) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let name = backedUpData.name;
+            if (!name) {
+                name = backedUpData.label;
+            }
+            logger.info(`${selectedApp} : Sync ${type} : ${name}`);
+            let data = JSON.parse(JSON.stringify(backedUpData));
+            data.app = selectedApp;
+            data._id = existinID;
+            delete data.status;
+            let updateURL = `${baseURL}/utils/${existinID}/sync`;
+            let newData = yield (0, manager_api_1.put)(updateURL, data);
+            (0, lib_misc_1.printInfo)(`${type} synced : ${name}`);
+            logger.info(JSON.stringify(newData));
+            return newData;
+        }
+        catch (e) {
+            logger.error(e.message);
+        }
+    });
+}
 // App level restores
 function restoreLibrary() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -262,7 +331,8 @@ function restoreDataServices() {
                 dataservice.status = "Undeployed";
                 if (newDataServices.indexOf(dataservice._id) != -1)
                     dataservice.status = "Draft";
-                return yield update("Dataservice", BASE_URL, selectedApp, dataservice, dataserviceMap[dataservice._id]);
+                yield update("Dataservice", BASE_URL, selectedApp, dataservice, dataserviceMap[dataservice._id]);
+                return yield deploy("Dataservice", BASE_URL, selectedApp, dataservice, dataserviceMap[dataservice._id]);
             }), Promise.resolve());
         }
         catch (e) {
@@ -455,7 +525,8 @@ function restoreDataPipes() {
                 datapipe = (0, lib_parser_pipe_1.parseDataPipeAndFixAppName)(datapipe, selectedApp);
                 if (newDataPipes.indexOf(datapipe._id) != -1)
                     datapipe.status = "Draft";
-                return yield update("Data pipe", BASE_URL, selectedApp, datapipe, datapipeMap[datapipe._id]);
+                yield update("Data pipe", BASE_URL, selectedApp, datapipe, datapipeMap[datapipe._id]);
+                return yield publish("Data pipe", BASE_URL, selectedApp, datapipe, datapipeMap[datapipe._id]);
             }), Promise.resolve());
         }
         catch (e) {
@@ -525,10 +596,11 @@ function restoreDeployments() {
                 let existingID = yield configExists(BASE_URL, deployment.name, selectedApp);
                 let newData = null;
                 if (existingID)
-                    newData = yield update("Deployment Group", BASE_URL, selectedApp, deployment, existingID);
+                    newData = yield update("Deployment", BASE_URL, selectedApp, deployment, existingID);
                 else
                     newData = yield insert("Deployment", BASE_URL, selectedApp, deployment);
                 (0, lib_db_1.restoreMapper)("deployments", deployment._id, newData._id);
+                return yield sync("Deployment", BASE_URL, selectedApp, deployment, newData._id);
             }), Promise.resolve());
         }
         catch (e) {
