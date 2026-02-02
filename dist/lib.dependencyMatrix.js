@@ -4,7 +4,7 @@ exports.recalculateDependencyMatrix = void 0;
 const lib_db_1 = require("./lib.db");
 let dependencyMatrixOfDataServices = {};
 let dependencyMatrixOfDataPipes = {};
-let dependencyMatrixOfDeploymentGroups = {};
+let dependencyMatrixOfDeployments = {};
 function updateTheDependencyMatrixOfDataServices(id, newDependencyMatrix) {
     try {
         const data = dependencyMatrixOfDataServices[id];
@@ -138,6 +138,6 @@ function recalculateDependencyMatrix() {
     });
     (0, lib_db_1.backupDependencyMatrixOfDataService)(dependencyMatrixOfDataServices);
     (0, lib_db_1.backupDependencyMatrixOfDataPipe)(dependencyMatrixOfDataPipes);
-    (0, lib_db_1.backupDependencyMatrixOfDeploymentGroups)(dependencyMatrixOfDeploymentGroups);
+    (0, lib_db_1.backupDependencyMatrixOfDeployments)(dependencyMatrixOfDeployments);
 }
 exports.recalculateDependencyMatrix = recalculateDependencyMatrix;

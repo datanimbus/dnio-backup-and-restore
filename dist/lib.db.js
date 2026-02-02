@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.readRestoreMap = exports.readDependencyMatrixOfDataPipes = exports.readDependencyMatrixOfDataServices = exports.readBackupMap = exports.read = exports.restoreMapper = exports.backupDependencyMatrixOfDeploymentGroups = exports.backupDependencyMatrixOfDataPipe = exports.backupDependencyMatrixOfDataService = exports.backupMapper = exports.save = exports.restoreInit = exports.backupInit = void 0;
+exports.readRestoreMap = exports.readDependencyMatrixOfDataPipes = exports.readDependencyMatrixOfDataServices = exports.readBackupMap = exports.read = exports.restoreMapper = exports.backupDependencyMatrixOfDeployments = exports.backupDependencyMatrixOfDataPipe = exports.backupDependencyMatrixOfDataService = exports.backupMapper = exports.save = exports.restoreInit = exports.backupInit = void 0;
 const path_1 = require("path");
 const fs_1 = require("fs");
 const lib_misc_1 = require("./lib.misc");
@@ -99,15 +99,15 @@ function backupDependencyMatrixOfDataPipe(data) {
     logger.trace(`Updated ${global.backupFileName} : dependencyMatrixOfDataPipes`);
 }
 exports.backupDependencyMatrixOfDataPipe = backupDependencyMatrixOfDataPipe;
-function backupDependencyMatrixOfDeploymentGroups(data) {
+function backupDependencyMatrixOfDeployments(data) {
     let backupData = readJSON(global.backupFileName);
-    if (!backupData.dependencyMatrixOfDeploymentGroups)
-        backupData["dependencyMatrixOfDeploymentGroups"] = {};
-    backupData.dependencyMatrixOfDeploymentGroups = data;
+    if (!backupData.dependencyMatrixOfDeployments)
+        backupData["dependencyMatrixOfDeployments"] = {};
+    backupData.dependencyMatrixOfDeployments = data;
     writeJSON(global.backupFileName, backupData);
-    logger.trace(`Updated ${global.backupFileName} : dependencyMatrixOfDeploymentGroups`);
+    logger.trace(`Updated ${global.backupFileName} : dependencyMatrixOfDeployments`);
 }
-exports.backupDependencyMatrixOfDeploymentGroups = backupDependencyMatrixOfDeploymentGroups;
+exports.backupDependencyMatrixOfDeployments = backupDependencyMatrixOfDeployments;
 function restoreMapper(token, key, value) {
     let restoreMapData = readJSON(global.restoreFileName);
     if (!restoreMapData[token])

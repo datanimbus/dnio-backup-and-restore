@@ -504,7 +504,7 @@ function restoreGroups() {
 function restoreDeployments() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            let deployments = (0, lib_db_1.read)("deploymentGroups");
+            let deployments = (0, lib_db_1.read)("deployments");
             if (deployments.length < 1)
                 return;
             (0, lib_misc_1.header)("Deployment");
@@ -528,7 +528,7 @@ function restoreDeployments() {
                     newData = yield update("Deployment Group", BASE_URL, selectedApp, deployment, existingID);
                 else
                     newData = yield insert("Deployment", BASE_URL, selectedApp, deployment);
-                (0, lib_db_1.restoreMapper)("deploymentGroups", deployment._id, newData._id);
+                (0, lib_db_1.restoreMapper)("deployments", deployment._id, newData._id);
             }), Promise.resolve());
         }
         catch (e) {

@@ -96,12 +96,12 @@ export function backupDependencyMatrixOfDataPipe(data: any) {
 	logger.trace(`Updated ${global.backupFileName} : dependencyMatrixOfDataPipes`);
 }
 
-export function backupDependencyMatrixOfDeploymentGroups(data: any) {
+export function backupDependencyMatrixOfDeployments(data: any) {
 	let backupData = readJSON(global.backupFileName);
-	if (!backupData.dependencyMatrixOfDeploymentGroups) backupData["dependencyMatrixOfDeploymentGroups"] = {};
-	backupData.dependencyMatrixOfDeploymentGroups = data;
+	if (!backupData.dependencyMatrixOfDeployments) backupData["dependencyMatrixOfDeployments"] = {};
+	backupData.dependencyMatrixOfDeployments = data;
 	writeJSON(global.backupFileName, backupData);
-	logger.trace(`Updated ${global.backupFileName} : dependencyMatrixOfDeploymentGroups`);
+	logger.trace(`Updated ${global.backupFileName} : dependencyMatrixOfDeployments`);
 }
 
 export function restoreMapper(token: string, key: string, value: string) {

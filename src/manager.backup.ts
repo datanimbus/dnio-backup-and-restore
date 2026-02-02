@@ -289,10 +289,10 @@ async function fetchDeployments() {
 		const URL_COUNT = `/api/a/bm/${selectedApp}/deployment/group`;
 		const deploymentsCount = await get(URL_COUNT, getURLParamsForCount());
 		const deployments = await get(URL_DATA, getURLParamsForData(deploymentsCount));
-		save("deploymentGroups", deployments);
+		save("deployments", deployments);
 		deployments.forEach((deployment: any) => {
-			backupMapper("deploymentGroups", deployment._id, deployment.name);
-			backupMapper("deploymentGroups_lookup", deployment.name, deployment._id);
+			backupMapper("deployments", deployment._id, deployment.name);
+			backupMapper("deployments_lookup", deployment.name, deployment._id);
 		});
 		printDone("Deployment Groups", deploymentsCount);
 	} catch (e: any) {

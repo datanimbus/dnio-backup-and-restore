@@ -443,7 +443,7 @@ async function restoreGroups() {
 
 async function restoreDeployments() {
 	try {
-		let deployments = read("deploymentGroups");
+		let deployments = read("deployments");
 		if (deployments.length < 1) return;
 		header("Deployment");
 		printInfo(`Deployments to restore - ${deployments.length}`);
@@ -465,7 +465,7 @@ async function restoreDeployments() {
 			let newData = null;
 			if (existingID) newData = await update("Deployment Group", BASE_URL, selectedApp, deployment, existingID);
 			else newData = await insert("Deployment", BASE_URL, selectedApp, deployment);
-			restoreMapper("deploymentGroups", deployment._id, newData._id);
+			restoreMapper("deployments", deployment._id, newData._id);
 		}, Promise.resolve());
 	} catch (e: any) {
 		logger.error(e.message);

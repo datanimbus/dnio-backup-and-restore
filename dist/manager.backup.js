@@ -317,10 +317,10 @@ function fetchDeployments() {
             const URL_COUNT = `/api/a/bm/${selectedApp}/deployment/group`;
             const deploymentsCount = yield (0, manager_api_1.get)(URL_COUNT, getURLParamsForCount());
             const deployments = yield (0, manager_api_1.get)(URL_DATA, getURLParamsForData(deploymentsCount));
-            (0, lib_db_1.save)("deploymentGroups", deployments);
+            (0, lib_db_1.save)("deployments", deployments);
             deployments.forEach((deployment) => {
-                (0, lib_db_1.backupMapper)("deploymentGroups", deployment._id, deployment.name);
-                (0, lib_db_1.backupMapper)("deploymentGroups_lookup", deployment.name, deployment._id);
+                (0, lib_db_1.backupMapper)("deployments", deployment._id, deployment.name);
+                (0, lib_db_1.backupMapper)("deployments_lookup", deployment.name, deployment._id);
             });
             (0, lib_misc_1.printDone)("Deployment Groups", deploymentsCount);
         }
