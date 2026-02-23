@@ -65,13 +65,13 @@ function configExists(api, name, selectedApp) {
         }
     });
 }
-function configExistsWithLabel(api, label, selectedApp) {
+function configExistsWithNodeID(api, nodeId) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             let searchParams = new URLSearchParams();
-            searchParams.append("filter", JSON.stringify({ app: selectedApp, label: label }));
+            searchParams.append("filter", JSON.stringify({ nodeId: nodeId }));
             searchParams.append("count", "-1");
-            searchParams.append("select", "label");
+            searchParams.append("select", "nodeId, _id, label");
             logger.debug(`Check for existing config - ${api} ${searchParams}`);
             let data = yield (0, manager_api_1.get)(api, searchParams);
             logger.debug(`Check for existing config result - ${api} : ${JSON.stringify(data)}`);
@@ -81,6 +81,38 @@ function configExistsWithLabel(api, label, selectedApp) {
         }
         catch (e) {
             logger.error(e.message);
+        }
+    });
+}
+function searchMarketplaceWithNodeID(api, nodeId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let searchParams = new URLSearchParams();
+            searchParams.append("filter", JSON.stringify({ nodeId: nodeId }));
+            searchParams.append("count", "-1");
+            searchParams.append("select", "nodeId, _id, label");
+            logger.debug(`Search marketplace with node ID - ${api} ${searchParams}`);
+            let data = yield (0, manager_api_1.get)(api, searchParams);
+            logger.debug(`Search marketplace with node ID result - ${api} : ${JSON.stringify(data)}`);
+            if (data.length > 0 && data[0]._id)
+                return data[0]._id;
+            return null;
+        }
+        catch (e) {
+            logger.error(e.message);
+        }
+    });
+}
+function importMarketplaceNode(api, marketplaceId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let data = yield (0, manager_api_1.post)(api, { marketIds: [marketplaceId] });
+            logger.debug(`Import marketplace node result - ${api} : ${JSON.stringify(data)}`);
+            return data[0];
+        }
+        catch (e) {
+            logger.error(e.message);
+            return null;
         }
     });
 }
@@ -435,18 +467,24 @@ function restoreMyNodes() {
                 return;
             (0, lib_misc_1.header)("My Nodes");
             (0, lib_misc_1.printInfo)(`My Nodes to restore - ${myNodes.length}`);
-            let BASE_URL = `/api/a/bm/${selectedApp}/my-node`;
             yield myNodes.reduce((prev, myNode) => __awaiter(this, void 0, void 0, function* () {
                 yield prev;
-                delete myNode._metadata;
-                delete myNode.__v;
-                delete myNode.version;
-                let existingID = yield configExistsWithLabel(BASE_URL, myNode.label, selectedApp);
-                let newData = null;
-                if (existingID)
-                    newData = yield update("MyNode", BASE_URL, selectedApp, myNode, existingID);
-                else
-                    newData = yield insert("MyNode", BASE_URL, selectedApp, myNode);
+                logger.debug(`Checking if my node already exists - ${myNode.nodeId} - ${myNode.type} - ${myNode.label}`);
+                let existingID = yield configExistsWithNodeID(`/api/a/bm/${selectedApp}/my-node`, myNode.nodeId);
+                if (existingID) {
+                    (0, lib_misc_1.printInfo)(`Plugin already exists - ${myNode.type} - ${myNode.label}`);
+                    (0, lib_db_1.restoreMapper)("myNodes", myNode._id, existingID);
+                    logger.debug(`My node already exists - ${myNode.nodeId}`);
+                    return;
+                }
+                let marketplaceID = yield searchMarketplaceWithNodeID(`/api/a/bm/${selectedApp}/marketplace/node`, myNode.nodeId);
+                if (!marketplaceID) {
+                    (0, lib_misc_1.printInfo)(`Plugin not found in Marketplace - ${myNode.type} - ${myNode.label}`);
+                    logger.error(`Plugin not found in Marketplace - ${myNode.nodeId} - ${myNode.type}`);
+                    throw new Error(`Plugin not found in Marketplace - ${myNode.nodeId} - ${myNode.type}, Please update the Marketplace first.`);
+                }
+                let newData = yield importMarketplaceNode(`/api/a/bm/${selectedApp}/my-node/utils/install`, marketplaceID);
+                (0, lib_misc_1.printInfo)(`Plugin imported from Marketplace - ${myNode.type} - ${myNode.label}`);
                 (0, lib_db_1.restoreMapper)("myNodes", myNode._id, newData._id);
             }), Promise.resolve());
         }
