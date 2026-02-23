@@ -1,6 +1,6 @@
 {
   "name": "dnio-backup-and-restore",
-  "version": "3.2.32",
+  "version": "3.2.33",
   "description": "Utility to backup and restore data.stack",
   "main": "dist/app.js",
   "types": "dist/app.d.ts",
