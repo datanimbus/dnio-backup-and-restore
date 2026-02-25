@@ -554,6 +554,7 @@ async function restoreDeployments() {
 			delete deployment.namespace;
 			delete deployment.yaml;
 			delete deployment.draftVersion;
+			deployment.status = 'Stopped';
 			deployment.app = selectedApp;
 			deployment.deployments.forEach((item: any) => {
 				if (dataPipesIDMap[item._id]) {
